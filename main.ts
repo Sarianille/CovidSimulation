@@ -1,18 +1,48 @@
 /* eslint-disable no-undef */
+//@ts-check
 
-class GraphNode {
-  infected;
+class GraphNode implements d3.SimulationNodeDatum {
+  index: number;
+  x?: number;
+  y?: number;
+  vx?: number;
+  vy?: number;
+  infected: boolean;
 
-  constructor(infected) {
+  constructor(index: number, infected: boolean) {
+    this.index = index;
     this.infected = infected;
   }
 
-  infect() {
+  public infect(): void {
     this.infected = true;
+  }
+
+  public clone(): GraphNode {
+    return new GraphNode(this.index, this.infected);
   }
 }
 
-function decideNodeCount(nodesAmount) {
+class GraphLink implements d3.SimulationLinkDatum<GraphNode> {
+  source: number;
+  target: number;
+  sourceIndex: number;
+  targetIndex: number;
+  value: number;
+  type: number;
+  index?: number;
+
+  constructor(sourceIndex: number, targetIndex: number, value: number, type: number) {
+    this.source = sourceIndex;
+    this.target = targetIndex;
+    this.sourceIndex = sourceIndex;
+    this.targetIndex = targetIndex;
+    this.value = value;
+    this.type = type;
+  }
+ }
+
+function decideNodeCount(nodesAmount: number): number {
   if (nodesAmount == 0) {
     return Math.min(Math.floor(Math.random() * 100 + 10), 100);
   } else {
@@ -20,25 +50,25 @@ function decideNodeCount(nodesAmount) {
   }
 }
 
-function createNodes(nodes, nodesAmount, percentageOfInfected) {
+function createNodes(nodes: GraphNode[], nodesAmount: number, percentageOfInfected: number): void {
   for (let i = 0; i < nodesAmount; i++) {
-    nodes.push(new GraphNode(Math.random() < percentageOfInfected));
+    nodes.push(new GraphNode(i, Math.random() < percentageOfInfected));
   }
 }
 
-function createLinks(links, nodes, nodesAmount) {
+function createLinks(links: GraphLink[], nodes: GraphNode[], nodesAmount: number): void {
   for (let i = 0; i < nodesAmount * 2; i++) {
     const source = Math.floor(Math.random() * nodesAmount);
     const target = Math.floor(Math.random() * nodesAmount);
     const value = nodes[source].infected || nodes[target].infected ? 3 : 1;
     const type = (Math.floor(Math.random() * 100)) % 4;
-    links.push({ source: source, target: target, value: value, type: type });
+    links.push(new GraphLink(source, target, value, type));
   }
 }
 
-function createData(nodesAmount = 0, percentageOfInfected = 0.1) {
-  const nodes = [];
-  const links = [];
+function createData(nodesAmount: number, percentageOfInfected: number): { nodes: GraphNode[], links: GraphLink[] } {
+  const nodes: GraphNode[] = [];
+  const links: GraphLink[] = [];
   let actualNodesAmount = decideNodeCount(nodesAmount);
 
   createNodes(nodes, actualNodesAmount, percentageOfInfected);
@@ -47,7 +77,7 @@ function createData(nodesAmount = 0, percentageOfInfected = 0.1) {
   return { nodes, links };
 }
 
-async function drawChart(nodeCount, infectedPercentage) {
+async function drawChart(nodeCount: number, infectedPercentage: number): Promise<SVGSVGElement | null> {
     let data = createData(nodeCount, infectedPercentage);
 
     // Specify the dimensions of the chart.
@@ -60,12 +90,12 @@ async function drawChart(nodeCount, infectedPercentage) {
   
     // The force simulation mutates links and nodes, so create a copy
     // so that re-evaluating this cell produces the same result.
-    const links = data.links.map(d => ({...d}));
-    const nodes = data.nodes.map(d => ({...d}));
-  
+    const links: GraphLink[] = data.links.map(d => ({...d}));
+    const nodes: GraphNode[] = data.nodes.map(d => d.clone());
+
     // Create a simulation with several forces.
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.index).strength(d => { console.log(d); if (d.type == 3) return 0; else return 2 }))
+    const simulation = d3.forceSimulation<GraphNode, GraphLink>(nodes)
+        .force("link", d3.forceLink(links).strength(d => { if (d.type == 3) return 0; else return 2 }))
         .force("charge", d3.forceManyBody())
         .force("center", d3.forceCenter(width / 2, height / 2))
         .on("tick", ticked);
@@ -97,40 +127,43 @@ async function drawChart(nodeCount, infectedPercentage) {
         .attr("fill", d => nodeColor[+ d.infected]);
   
     // Add a drag behavior.
-    node.call(d3.drag()
-          .on("start", dragstarted)
-          .on("drag", dragged)
-          .on("end", dragended));
+    const drag = d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended); 
+
+    // hack to make drag work with TS, consult other possible solutions
+    node.call(drag as any);
   
     // Set the position attributes of links and nodes each time the simulation ticks.
     function ticked() {
       link
-          .attr("x1", d => d.source.x)
-          .attr("y1", d => d.source.y)
-          .attr("x2", d => d.target.x)
-          .attr("y2", d => d.target.y);
+          .attr("x1", d => nodes[d.sourceIndex].x ?? 0)
+          .attr("y1", d => nodes[d.sourceIndex].y ?? 0)
+          .attr("x2", d => nodes[d.targetIndex].x ?? 0)
+          .attr("y2", d => nodes[d.targetIndex].y ?? 0);
   
       node
-          .attr("cx", d => d.x)
-          .attr("cy", d => d.y);
+          .attr("cx", d => d.x ?? 0)
+          .attr("cy", d => d.y ?? 0);
     }
   
     // Reheat the simulation when drag starts, and fix the subject position.
-    function dragstarted(event) {
+    function dragstarted(event): void {
       if (!event.active) simulation.alphaTarget(0.3).restart();
       event.subject.fx = event.subject.x;
       event.subject.fy = event.subject.y;
     }
   
     // Update the subject (dragged node) position during drag.
-    function dragged(event) {
+    function dragged(event): void {
       event.subject.fx = event.x;
       event.subject.fy = event.y;
     }
   
     // Restore the target alpha so the simulation cools after dragging ends.
     // Unfix the subject position now that it’s no longer being dragged.
-    function dragended(event) {
+    function dragended(event): void {
       if (!event.active) simulation.alphaTarget(0);
       event.subject.fx = null;
       event.subject.fy = null;
@@ -139,12 +172,12 @@ async function drawChart(nodeCount, infectedPercentage) {
     return svg.node();
   }
 
-async function createSVG() {
-    const chart = await drawChart();
+async function createSVG(): Promise<void> {
+    const chart = await drawChart(0, 0.1);
     d3.select("body").append(() => chart);
 }
 
-async function modifySVG(nodeCount, infectedPercentage) {
+async function modifySVG(nodeCount: number, infectedPercentage: number): Promise<void> {
     const chart = await drawChart(nodeCount, infectedPercentage);
     d3.select("svg").remove();
     d3.select("body").append(() => chart);
@@ -152,14 +185,13 @@ async function modifySVG(nodeCount, infectedPercentage) {
 
 createSVG();
 
-var nodeSlider = document.getElementById("nodeCount");
-var infectedSlider = document.getElementById("infectedPercentage");
+let nodeSlider = document.getElementById("nodeCount") as HTMLInputElement;
+let infectedSlider = document.getElementById("infectedPercentage") as HTMLInputElement;
+
+const sliderCallback = async function() {
+  await modifySVG(Number(nodeSlider.value), Number(infectedSlider.value) / 100);
+ }
 
 // Update the current slider value (each time you drag the slider handle)
-nodeSlider.oninput = async function() {
-  await modifySVG(this.value, infectedSlider.value / 100);
-}
-
-infectedSlider.oninput = async function() {
-  await modifySVG(nodeSlider.value, this.value / 100);
-}
+nodeSlider.oninput = sliderCallback;
+infectedSlider.oninput = sliderCallback;
