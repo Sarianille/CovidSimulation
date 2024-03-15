@@ -3,6 +3,7 @@
 import * as d3f from "d3-force";
 import * as d3s from "d3-selection";
 import * as d3d from "d3-drag";
+import * as d3r from "d3-random";
 
 /* 
  * A lot of the code in this file is based on the following example:
@@ -27,7 +28,7 @@ function infect(node) {
 
   decideNodeCount(nodesAmount) {
     if (nodesAmount == 0) {
-      return Math.min(Math.floor(Math.random() * 100 + 10), 100);
+      return d3r.randomInt(10, 100);
     } else {
       return nodesAmount;
     }
@@ -35,7 +36,7 @@ function infect(node) {
 
   createNodes(nodes, nodesAmount, percentageOfInfected) {
     for (let i = 0; i < nodesAmount; i++) {
-      nodes.push(new GraphNode(Math.random() < percentageOfInfected));
+      nodes.push(new GraphNode(d3r.randomBernoulli(percentageOfInfected)));
     }
   }
 
@@ -77,19 +78,15 @@ function infect(node) {
     this.reIndexLinkNodes(links, unlinkedIndexes);
   }
 
-  randomBetween(min, max) {
-    return Math.floor(Math.random() * (max - min) + min);
-  }
-
   createLinks(links, nodes, nodesAmount) {
     for (let i = 0; i < nodesAmount * 2; i++) {
-      const source = this.randomBetween(0, nodesAmount);
-      let target = this.randomBetween(0, nodesAmount);
+      const source = d3r.randomInt(0, nodesAmount);
+      let target = d3r.randomInt(0, nodesAmount);
       while (source === target) {
-        target = this.randomBetween(0, nodesAmount);
+        target = d3r.randomInt(0, nodesAmount);
       }
       const value = nodes[source].infected || nodes[target].infected ? 3 : 1;
-      const type = (this.randomBetween(0, 100)) % 4;
+      const type = d3r.randomInt(0, 4);
       links.push({source: source, target: target, value: value, type: type});
     }
 
