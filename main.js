@@ -18,17 +18,19 @@ class GraphNode {
   }
 }
 
-function infect(node) {
-  node.infected = true;
+function tryInfect(node, probability) {
+  if (node.infected) {
+    return false;
+  }
+
+  node.infected = d3r.randomBernoulli(probability)();
+  return node.infected;
 }
 
  class Simulation {
-  spreadStarted = false;
-  timer = 100;
-
   decideNodeCount(nodesAmount) {
     if (nodesAmount == 0) {
-      return d3r.randomInt(10, 100);
+      return d3r.randomInt(10, 100)();
     } else {
       return nodesAmount;
     }
@@ -36,7 +38,7 @@ function infect(node) {
 
   createNodes(nodes, nodesAmount, percentageOfInfected) {
     for (let i = 0; i < nodesAmount; i++) {
-      nodes.push(new GraphNode(d3r.randomBernoulli(percentageOfInfected)));
+      nodes.push(new GraphNode(d3r.randomBernoulli(percentageOfInfected)()));
     }
   }
 
@@ -80,13 +82,13 @@ function infect(node) {
 
   createLinks(links, nodes, nodesAmount) {
     for (let i = 0; i < nodesAmount * 2; i++) {
-      const source = d3r.randomInt(0, nodesAmount);
-      let target = d3r.randomInt(0, nodesAmount);
+      const source = d3r.randomInt(0, nodesAmount)();
+      let target = d3r.randomInt(0, nodesAmount)();
       while (source === target) {
-        target = d3r.randomInt(0, nodesAmount);
+        target = d3r.randomInt(0, nodesAmount)();
       }
       const value = nodes[source].infected || nodes[target].infected ? 3 : 1;
-      const type = d3r.randomInt(0, 4);
+      const type = d3r.randomInt(0, 4)();
       links.push({source: source, target: target, value: value, type: type});
     }
 
@@ -113,6 +115,7 @@ function infect(node) {
   
     // Specify the color scale.
     const nodeColor = ['gray', 'red'];
+    // In the order of family, friends, workplace/school, strangers
     const linkColor = ['green', 'purple', 'blue', 'gray'];
   
     // The force simulation mutates links and nodes, so create a copy
@@ -161,10 +164,6 @@ function infect(node) {
   
     // Set the position attributes of links and nodes each time the simulation ticks.
     function ticked() {
-      if (this.spreadStarted) {
-        spreadInfection(this);
-      }
-
       link
           .attr("x1", d => d.source.x ?? 0)
           .attr("y1", d => d.source.y ?? 0)
@@ -178,23 +177,25 @@ function infect(node) {
           .attr("fill", d => nodeColor[+ d.infected]);
     }
 
-    function spreadInfection(simulation) {
-      if (simulation.timer > 0) {
-        simulation.timer--;
-        return;
+    function spreadInfection(intervalID) {
+      if (nodes.filter(node => !node.infected).length == 0) {
+        clearInterval(intervalID);
       }
 
       const newlyInfected = [];
       const infectedLinks = links.filter(link => link.value == 3);
+      const probabilities = [0.1, 0.05, 0.05, 0.01];
 
       infectedLinks.forEach(link => {
-        if (link.source.infected) {
-          infect(link.target);
-          newlyInfected.push(link.target);
+        if (link.source.infected && !newlyInfected.includes(link.source)) {
+          if (tryInfect(link.target, probabilities[link.type])) {
+            newlyInfected.push(link.target);
+          }
         }
-        if (link.target.infected) {
-          infect(link.source);
-          newlyInfected.push(link.source);
+        if (link.target.infected && !newlyInfected.includes(link.target)) {
+          if (tryInfect(link.source, probabilities[link.type])) {
+            newlyInfected.push(link.source);
+          }
         }
       });
 
@@ -204,8 +205,10 @@ function infect(node) {
         }
       });
 
-      simulation.timer = 100;
+      simulation.restart();
     }
+
+    this.spreadInfection = spreadInfection.bind(this);
     
     // Reheat the simulation when drag starts, and fix the subject position.
     function dragstarted(event) {
@@ -240,8 +243,6 @@ function infect(node) {
     const chart = await this.drawChart(nodeCount, infectedPercentage);
     d3s.select("svg").remove();
     d3s.select("body").append(() => chart);
-    this.spreadStarted = false;
-    this.timer = 100;
   }
 }
 
@@ -259,4 +260,4 @@ const sliderCallback = async function() {
 // Update the current slider value (each time you drag the slider handle)
 nodeSlider.oninput = sliderCallback;
 infectedSlider.oninput = sliderCallback;
-startButton.onclick = function() { simulation.spreadStarted = true; };
+startButton.onclick = function() { let intervalID = setInterval(() => simulation.spreadInfection(intervalID), 1000); };
