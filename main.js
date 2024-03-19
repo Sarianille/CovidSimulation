@@ -252,6 +252,8 @@ simulation.createSVG();
 let nodeSlider = document.getElementById("nodeCount");
 let infectedSlider = document.getElementById("infectedPercentage");
 let startButton = document.getElementById("startButton");
+let stopButton = document.getElementById("stopButton");
+let intervalID;
 
 const sliderCallback = async function() {
   await simulation.modifySVG(Number(nodeSlider.value), Number(infectedSlider.value) / 100);
@@ -260,4 +262,5 @@ const sliderCallback = async function() {
 // Update the current slider value (each time you drag the slider handle)
 nodeSlider.oninput = sliderCallback;
 infectedSlider.oninput = sliderCallback;
-startButton.onclick = function() { let intervalID = setInterval(() => simulation.spreadInfection(intervalID), 1000); };
+startButton.onclick = function() { intervalID = setInterval(() => simulation.spreadInfection(intervalID), 1000); startButton.disabled = true; stopButton.disabled = false; };
+stopButton.onclick = function() { clearInterval(intervalID); startButton.disabled = false; stopButton.disabled = true; };

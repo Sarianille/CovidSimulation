@@ -13,17 +13,40 @@
 </html> -->
 
 <!DOCTYPE html>
-<html>
-    <body>
-        <script src="https://d3js.org/d3.v7.js"></script>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <link rel="stylesheet" href="style.css"/>
+  </head>
+  <body>
+      <script src="https://d3js.org/d3.v7.js"></script>
 
-        <div class="slidecontainer">
-            <input type="range" min="0" max="100" value="0" class="slider" id="nodeCount">
-            <input type="range" min="0" max="100" value="10" class="slider" id="infectedPercentage">
-            <button id="startButton">Start</button>
-        </div>
+      <div class="slidecontainer">
+        <label for="nodeCount">Node count</label>
+        <input type="range" min="0" max="100" value="0" class="slider" id="nodeCount">
+        <label for="infectedPercentage">Infected percentage</label>
+        <input type="range" min="0" max="100" value="10" class="slider" id="infectedPercentage">
+      </div>
+      <div class="restrictions">
+        <input type="checkbox" id="respirators" name="respirators" value="respirators">
+        <label for="respirators">Respirator usage in public spaces</label>
+        <input type="checkbox" id="testing" name="testing" value="testing">
+        <label for="testing">Antigen testing in schools and workplaces 2x per week</label>
+        <input type="checkbox" id="quarantine" name="quarantine" value="quarantine">
+        <label for="quarantine">2 weeks of quarantine after a positive test</label>
+        <input type="checkbox" id="distancing" name="distancing" value="distancing">
+        <label for="distancing">Social distancing in public spaces</label>
+        <input type="checkbox" id="homeoffice" name="homeoffice" value="homeoffice">
+        <label for="homeoffice">Home office and online school</label>
+        <input type="checkbox" id="hobbies" name="hobbies" value="hobbies">
+        <label for="hobbies">Restrictions on hobbies and sports</label>
+        <!-- atd -->
+      </div>
+      <div class="simulationcontrols">
+        <button id="startButton">Start</button>
+        <button disabled id="stopButton">Stop</button>
+      </div>
 
-        <script type="module" src="/main.js"></script>
-
-    </body>
+      <script type="module" src="/main.js"></script>
+  </body>
 </html>
