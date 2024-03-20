@@ -177,14 +177,15 @@ function tryInfect(node, probability) {
           .attr("fill", d => nodeColor[+ d.infected]);
     }
 
-    function spreadInfection(intervalID) {
+    function spreadInfection(intervalID, probabilities) {
       if (nodes.filter(node => !node.infected).length == 0) {
         clearInterval(intervalID);
       }
 
+      console.log(probabilities);
+
       const newlyInfected = [];
       const infectedLinks = links.filter(link => link.value == 3);
-      const probabilities = [0.1, 0.05, 0.05, 0.01];
 
       infectedLinks.forEach(link => {
         if (link.source.infected && !newlyInfected.includes(link.source)) {
@@ -255,6 +256,43 @@ let startButton = document.getElementById("startButton");
 let stopButton = document.getElementById("stopButton");
 let intervalID;
 
+const probabilities = [0.1, 0.05, 0.05, 0.01];
+let modifiedProbabilities = [];
+
+function modifyProbabilities() {
+  let inputs = document.getElementById("restrictions").getElementsByTagName("input");
+  modifiedProbabilities = probabilities.map((i) => i);
+
+  for (let i = 0; i < inputs.length; i++) {
+    if (inputs[i].checked) {
+      modifiedProbabilities[0] *= inputs[i].dataset.family ?? 1;
+      modifiedProbabilities[1] *= inputs[i].dataset.friends ?? 1;
+      modifiedProbabilities[2] *= inputs[i].dataset.workSchool ?? 1;
+      modifiedProbabilities[3] *= inputs[i].dataset.strangers ?? 1;
+    }
+  }
+}
+
+function disableInputs() {
+  startButton.disabled = true; 
+  stopButton.disabled = false; 
+
+  let inputs = document.getElementById("restrictions").getElementsByTagName("input");
+  for (let i = 0; i < inputs.length; i++) {
+    inputs[i].disabled = true;
+  }
+}
+
+function enableInputs() {
+  startButton.disabled = false; 
+  stopButton.disabled = true; 
+
+  let inputs = document.getElementById("restrictions").getElementsByTagName("input");
+  for (let i = 0; i < inputs.length; i++) {
+    inputs[i].disabled = false;
+  }
+}
+
 const sliderCallback = async function() {
   await simulation.modifySVG(Number(nodeSlider.value), Number(infectedSlider.value) / 100);
  }
@@ -262,5 +300,13 @@ const sliderCallback = async function() {
 // Update the current slider value (each time you drag the slider handle)
 nodeSlider.oninput = sliderCallback;
 infectedSlider.oninput = sliderCallback;
-startButton.onclick = function() { intervalID = setInterval(() => simulation.spreadInfection(intervalID), 1000); startButton.disabled = true; stopButton.disabled = false; };
-stopButton.onclick = function() { clearInterval(intervalID); startButton.disabled = false; stopButton.disabled = true; };
+
+startButton.onclick = function() { 
+  modifyProbabilities(); 
+  intervalID = setInterval(() => simulation.spreadInfection(intervalID, modifiedProbabilities), 1000); 
+  disableInputs();
+};
+stopButton.onclick = function() { 
+  clearInterval(intervalID); 
+  enableInputs();
+};
