@@ -1,15 +1,19 @@
 /* eslint-disable no-undef */
 
 import * as d3f from "d3-force";
-import * as d3s from "d3-selection";
+import * as d3sel from "d3-selection";
 import * as d3d from "d3-drag";
 import * as d3r from "d3-random";
+import * as d3sc from "d3-scale";
+import * as d3a from "d3-axis";
+import * as d3sh from "d3-shape";
 
 /* 
- * A lot of the code in this file is based on the following example:
+ * A lot of the code in this file is based on the following examples:
  * https://observablehq.com/@d3/force-directed-graph/2?intent=fork
+ * https://observablehq.com/@d3/inline-labels/2?intent=fork
  * I have made some modifications to the original code and added some
- * of my own code to make the simulation work as intended.
+ * of my own code to make the simulation and chart work as intended.
  */
 
 class GraphNode {
@@ -28,6 +32,8 @@ function tryInfect(node, probability) {
 }
 
  class Simulation {
+  infectedAmount = [{x: 0, y: 0}, {x: 5, y: 0}];
+
   decideNodeCount(nodesAmount) {
     if (nodesAmount == 0) {
       return d3r.randomInt(10, 100)();
@@ -108,6 +114,7 @@ function tryInfect(node, probability) {
 
   async drawChart(nodeCount, infectedPercentage) {
     let data = this.createData(nodeCount, infectedPercentage);
+    let tickCounter = 5;
 
     // Specify the dimensions of the chart.
     const width = 928;
@@ -131,7 +138,7 @@ function tryInfect(node, probability) {
         .on("tick", ticked.bind(this));
   
     // Create the SVG container.
-    const svg = d3s.create("svg")
+    const svg = d3sel.create("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [0, 0, width, height])
@@ -182,8 +189,6 @@ function tryInfect(node, probability) {
         clearInterval(intervalID);
       }
 
-      console.log(probabilities);
-
       const newlyInfected = [];
       const infectedLinks = links.filter(link => link.value == 3);
 
@@ -205,6 +210,15 @@ function tryInfect(node, probability) {
           link.value = 3;
         }
       });
+
+      if (tickCounter == 0) {
+        Chart.createSVG(this.infectedAmount);
+        this.infectedAmount.push({x: (this.infectedAmount[this.infectedAmount.length - 1].x + 5), y: newlyInfected.length});
+        tickCounter = 5;
+      } else {
+        tickCounter--;
+        this.infectedAmount[this.infectedAmount.length - 1].y += newlyInfected.length;
+      }
 
       simulation.restart();
     }
@@ -237,13 +251,89 @@ function tryInfect(node, probability) {
 
   async createSVG() {
     const chart = await this.drawChart(0, 0.1);
-    d3s.select("body").append(() => chart);
+    d3sel.select("body").append(() => chart);
+    Chart.createSVG(this.infectedAmount[0]);
   }
 
   async modifySVG(nodeCount, infectedPercentage) {
     const chart = await this.drawChart(nodeCount, infectedPercentage);
-    d3s.select("svg").remove();
-    d3s.select("body").append(() => chart);
+    d3sel.selectAll("svg").remove();
+    d3sel.select("body").append(() => chart);
+
+    this.infectedAmount = [{x: 0, y: 0}, {x: 5, y: 0}];
+    Chart.createSVG(this.infectedAmount[0]);
+  }
+}
+
+class Chart {
+  static async drawChart(infectedAmount) {
+    // Specify the chart’s dimensions.
+    const width = 800;
+    const height = 250;
+    const marginTop = 30;
+    const marginRight = 50;
+    const marginBottom = 30;
+    const marginLeft = 30;
+
+    // Create the horizontal and vertical scales.
+    const x = d3sc.scaleLinear()
+        .domain([0, 100])
+        .range([marginLeft, width - marginRight]);
+
+    const y = d3sc.scaleLinear()
+        .domain([0, 30])
+        .range([height - marginBottom, marginTop]);
+
+    // Create the SVG container.
+    const svg = d3sel.create("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", [0, 0, width, height])
+        .attr("style", "max-width: 100%; height: auto; font: 10px sans-serif;");
+
+    // Add the x-axis.
+    svg.append("g")
+        .attr("transform", `translate(0,${height - marginBottom})`)
+        .call(d3a.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
+        .append("text")
+        .attr("x", width - 30)
+        .attr("y", -6)
+        .attr("fill", "currentColor")
+        .attr("text-anchor", "end")
+        .text("Time");
+
+    // Add the y-axis.
+    svg.append("g")
+        .attr("transform", `translate(${marginLeft},0)`)
+        .call(d3a.axisLeft(y).ticks(height / 40).tickSizeOuter(0))
+        .append("text")
+        .attr("x", 0)
+        .attr("y", 25)
+        .attr("fill", "currentColor")
+        .attr("text-anchor", "start")
+        .text("Newly infected");
+
+    const line = d3sh.line()
+        .x(d => x(d.x))
+        .y(d => y(d.y));
+
+    // Draw the line.
+    svg.append("path")
+        .attr("fill", "none")
+        .attr("stroke", "red")
+        .attr("stroke-width", 1.5)
+        .attr("d", line(infectedAmount));
+
+    return svg.node();
+  }
+
+  static async createSVG(infectedAmount) {
+    if (d3sel.selectAll("svg")._groups[0].length > 1) {
+      d3sel.selectAll("svg")._groups[0][1].remove();
+    }
+
+    const chart = await Chart.drawChart(infectedAmount);
+    d3sel.select("body").append(() => chart);
   }
 }
 
