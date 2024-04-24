@@ -27,7 +27,7 @@ function tryInfect(node, probability) {
     return false;
   }
 
-  node.infected = d3r.randomBernoulli(probability)();
+  node.infected = d3r.randomBernoulli(probability * spreadRate)();
   return node.infected;
 }
 
@@ -117,8 +117,8 @@ function tryInfect(node, probability) {
     let tickCounter = 5;
 
     // Specify the dimensions of the chart.
-    const width = 928;
-    const height = 600;
+    const width = 800;
+    const height = 500;
   
     // Specify the color scale.
     const nodeColor = ['gray', 'red'];
@@ -269,7 +269,7 @@ class Chart {
   static async drawChart(infectedAmount) {
     // Specify the chart’s dimensions.
     const width = 800;
-    const height = 250;
+    const height = 300;
     const marginTop = 30;
     const marginRight = 50;
     const marginBottom = 30;
@@ -281,7 +281,7 @@ class Chart {
         .range([marginLeft, width - marginRight]);
 
     const y = d3sc.scaleLinear()
-        .domain([0, 30])
+        .domain([0, 50])
         .range([height - marginBottom, marginTop]);
 
     // Create the SVG container.
@@ -344,7 +344,18 @@ let nodeSlider = document.getElementById("nodeCount");
 let infectedSlider = document.getElementById("infectedPercentage");
 let startButton = document.getElementById("startButton");
 let stopButton = document.getElementById("stopButton");
+let scenario = document.getElementById("scenario");
 let intervalID;
+let spreadRate;
+
+function updateSpreadRate() {
+  const elements = document.getElementsByName("spread");
+  for (let i = 0; i < elements.length; i++) {
+    if (elements[i].checked) {
+      spreadRate = elements[i].value;
+    }
+  }
+}
 
 const probabilities = [0.1, 0.05, 0.05, 0.01];
 let modifiedProbabilities = [];
@@ -367,6 +378,12 @@ function disableInputs() {
   startButton.disabled = true; 
   stopButton.disabled = false; 
 
+  updateSpreadRate();
+  let elements = document.getElementsByName("spread");
+  for (let i = 0; i < elements.length; i++) {
+    elements[i].disabled = true;
+  }
+
   let inputs = document.getElementById("restrictions").getElementsByTagName("input");
   for (let i = 0; i < inputs.length; i++) {
     inputs[i].disabled = true;
@@ -377,10 +394,87 @@ function enableInputs() {
   startButton.disabled = false; 
   stopButton.disabled = true; 
 
+  let elements = document.getElementsByName("spread");
+  for (let i = 0; i < elements.length; i++) {
+    elements[i].disabled = false;
+  }
+
   let inputs = document.getElementById("restrictions").getElementsByTagName("input");
   for (let i = 0; i < inputs.length; i++) {
     inputs[i].disabled = false;
   }
+}
+
+function changeCheckedSpread(id) {
+  let elements = document.getElementsByName("spread");
+  for (let i = 0; i < elements.length; i++) {
+    elements[i].checked = false;
+  }
+
+  document.getElementById(id).checked = true;
+}
+
+function changeRestrictionsSelection(bool) {
+  let elements = document.getElementById("restrictions").getElementsByTagName("input");
+  for (let i = 0; i < elements.length; i++) {
+    elements[i].checked = bool;
+  }
+}
+
+function unselectAllRestrictions() {
+  changeRestrictionsSelection(false);
+}
+
+function selectAllRestrictions() {
+  changeRestrictionsSelection(true);
+}
+
+function selectSomeRestrictions(checkedRestrictions) {
+  unselectAllRestrictions();
+
+  let elements = document.getElementById("restrictions").getElementsByTagName("input");
+  for (let i = 0; i < elements.length; i++) {
+    if (checkedRestrictions.includes(elements[i].id)) {
+      elements[i].checked = true;
+    }
+  }
+}
+
+function updateScenario() {
+  let scenario = document.getElementById("scenario").value;
+  switch (scenario) {
+    case "0":
+      return;
+    case "1":
+      changeCheckedSpread("spreadLow");
+      unselectAllRestrictions();
+      break;
+    case "2":
+      changeCheckedSpread("spreadLow");
+      selectAllRestrictions();
+      break;
+    case "3":
+      changeCheckedSpread("spreadMedium");
+      unselectAllRestrictions();
+      break;
+    case "4":
+      changeCheckedSpread("spreadMedium");
+      selectSomeRestrictions(["respirators", "quarantine", "distancing"])
+      break;
+    case "5":
+      changeCheckedSpread("spreadMedium");
+      selectAllRestrictions();
+      break;
+    case "6":
+      changeCheckedSpread("spreadHigh");
+      unselectAllRestrictions();
+      break;
+    case "7":
+      changeCheckedSpread("spreadHigh");
+      selectAllRestrictions();
+      break;
+  }
+
 }
 
 const sliderCallback = async function() {
@@ -400,3 +494,7 @@ stopButton.onclick = function() {
   clearInterval(intervalID); 
   enableInputs();
 };
+
+scenario.onchange = function() {
+  updateScenario();
+}

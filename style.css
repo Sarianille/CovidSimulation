@@ -1,6 +1,68 @@
 body {
+  background-color: #E9F1FA;
+  font-family:'Times New Roman', Times, serif;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+svg {
+  background-color: #FFFFFF;
+  margin-top: 10px;
+}
+
+li {
+  list-style-type: none;
+}
+
+#text {
+  width: 80%;
+  margin-bottom: 20px;
+}
+
+#parameters {
+  display: grid;
+  grid-template-areas:
+    "single multi"
+    "choice multi"
+    "scenarios scenarios";
+  width: 80%;
+}
+
+#slidecontainer {
+  grid-area: single;
+}
+
+#slidecontainer li {
+  display: flex;
+  justify-content: space-between;
+}
+
+#modifiers {
+  grid-area: choice;
+  display: flex;
+  flex-direction: row;
+}
+
+#restrictions {
+  grid-area: multi;
+  margin-left: 50px;
+}
+
+#restrictionsOptions {
+  display: inline-block;
+  column-count: 2;
+}
+
+#scenarios {
+  grid-area: scenarios;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin: 20px;
+}
+
+#scenarios label {
+  margin-right: 10px;
 }
