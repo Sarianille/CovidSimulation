@@ -43,6 +43,8 @@ li {
   grid-area: choice;
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
+  margin-right: 55px;
 }
 
 #restrictions {
