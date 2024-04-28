@@ -16,13 +16,30 @@ import * as d3sh from "d3-shape";
  * of my own code to make the simulation and chart work as intended.
  */
 
+/**
+ * Represents a node in the graph.
+ */
 class GraphNode {
+  /**
+   * @constructor
+   * @param {Boolean} infected - Whether the node is infected or not.
+   */
   constructor(infected) {
     this.infected = infected;
   }
 }
 
-function tryInfect(node, probability) {
+/**
+ * Tries to infect uninfected nodes based on the probability and spread rate.
+ * 
+ * Can't be a method of the GraphNode class. The nodes get mutated in the simulation
+ * and calling this method on a node would then result in an error.
+ * @param {*} node - The node to try to infect.
+ * @param {Number} probability - The probability of infecting the node.
+ * @param {Number} spreadRate - The aggressiveness of the virus.
+ * @returns {Boolean} - Whether the node was newly infected or not.
+ */
+function tryInfect(node, probability, spreadRate) {
   if (node.infected) {
     return false;
   }
@@ -31,10 +48,23 @@ function tryInfect(node, probability) {
   return node.infected;
 }
 
+/**
+ * Represents a simulation of a virus spreading.
+ */
  class Simulation {
+  /**
+   * Contains the amount of infected nodes at each tick.
+   * Starts with helper values for the correct drawing of the chart in the beginning.
+   */
   infectedAmount = [{x: 0, y: 0}, {x: 5, y: 0}];
 
+  /**
+   * Decides the amount of nodes in the graph.
+   * @param {Number} nodesAmount - The amount of nodes specified by the user.
+   * @returns {Number} - The amount of nodes to be used in the graph.
+   */
   decideNodeCount(nodesAmount) {
+    // If the user has not specified the amount of nodes, generate a random amount.
     if (nodesAmount == 0) {
       return d3r.randomInt(10, 100)();
     } else {
@@ -42,12 +72,24 @@ function tryInfect(node, probability) {
     }
   }
 
+  /**
+   * Creates the nodes in the graph.
+   * @param {Array} nodes - The array to store the nodes in.
+   * @param {Number} nodesAmount - The amount of nodes to be created.
+   * @param {Number} percentageOfInfected - The percentage of nodes that are infected.
+   */
   createNodes(nodes, nodesAmount, percentageOfInfected) {
     for (let i = 0; i < nodesAmount; i++) {
       nodes.push(new GraphNode(d3r.randomBernoulli(percentageOfInfected)()));
     }
   }
 
+  /**
+   * Reindexes node after some nodes have been deleted.
+   * @param {Number} currentIndex - The current index of the node.
+   * @param {Array} unlinkedIndexes - The indexes of the nodes that have been deleted.
+   * @returns {Number} - The new index of the node.
+   */
   reIndexNode(currentIndex, unlinkedIndexes) {
     let difference = 0;
 
@@ -60,6 +102,11 @@ function tryInfect(node, probability) {
     return currentIndex - difference;
   }
 
+  /**
+   * Reindexes the source and target nodes of the links after some nodes have been deleted.
+   * @param {Array} links - The links in the graph.
+   * @param {Array} unlinkedIndexes - The indexes of the nodes that have been deleted.
+   */
   reIndexLinkNodes(links, unlinkedIndexes) {
     links.forEach(element => {
       element.source = this.reIndexNode(element.source, unlinkedIndexes);
@@ -67,9 +114,15 @@ function tryInfect(node, probability) {
     });
   }
 
+  /**
+   * Deletes nodes that are not linked to any other nodes.
+   * @param {Array} links - The links in the graph.
+   * @param {Array} nodes - The nodes in the graph.
+   */
   deleteUnlinkedNodes(links, nodes) {
     let unlinkedIndexes = nodes.map((node, index) => index);
 
+    // Remove the indexes of the nodes that are linked to other nodes.
     links.forEach(element => {
       if (unlinkedIndexes.includes(element.source)) {
         unlinkedIndexes.splice(unlinkedIndexes.indexOf(element.source), 1);
@@ -79,6 +132,7 @@ function tryInfect(node, probability) {
       }
     });
 
+    // Reverse the array to avoid index shifting when deleting nodes.
     unlinkedIndexes.reverse().forEach(element => {
       nodes.splice(element, 1);
     });
@@ -86,13 +140,21 @@ function tryInfect(node, probability) {
     this.reIndexLinkNodes(links, unlinkedIndexes);
   }
 
+  /**
+   * Creates the links in the graph.
+   * @param {Array} links - The array to store the links in.
+   * @param {Array} nodes - The nodes in the graph.
+   * @param {Number} nodesAmount - The amount of nodes in the graph.
+   */
   createLinks(links, nodes, nodesAmount) {
     for (let i = 0; i < nodesAmount * 2; i++) {
       const source = d3r.randomInt(0, nodesAmount)();
       let target = d3r.randomInt(0, nodesAmount)();
+      // Make sure the source and target are not the same.
       while (source === target) {
         target = d3r.randomInt(0, nodesAmount)();
       }
+
       const value = nodes[source].infected || nodes[target].infected ? 3 : 1;
       const type = d3r.randomInt(0, 4)();
       links.push({source: source, target: target, value: value, type: type});
@@ -101,6 +163,12 @@ function tryInfect(node, probability) {
     this.deleteUnlinkedNodes(links, nodes);
   }
 
+  /**
+   * Creates the nodes and links in the graph.
+   * @param {Number} nodesAmount - The amount of nodes in the graph.
+   * @param {Number} percentageOfInfected - The percentage of nodes that are infected.
+   * @returns {Object} - The nodes and links in the graph.
+   */
   createData(nodesAmount, percentageOfInfected) {
     const nodes = [];
     const links = [];
@@ -112,7 +180,13 @@ function tryInfect(node, probability) {
     return { nodes, links };
   }
 
-  async drawChart(nodeCount, infectedPercentage) {
+  /**
+   * Draws the simulation.
+   * @param {Number} nodeCount - The amount of nodes in the graph.
+   * @param {Number} infectedPercentage - The percentage of nodes that are infected.
+   * @returns {Element} - The SVG element of the simulation.
+   */
+  async drawSimulation(nodeCount, infectedPercentage) {
     let data = this.createData(nodeCount, infectedPercentage);
     let tickCounter = 5;
 
@@ -120,9 +194,9 @@ function tryInfect(node, probability) {
     const width = 800;
     const height = 500;
   
-    // Specify the color scale.
+    // In the order of uninfected, infected.
     const nodeColor = ['gray', 'red'];
-    // In the order of family, friends, workplace/school, strangers
+    // In the order of family, friends, workplace/school, strangers.
     const linkColor = ['green', 'purple', 'blue', 'gray'];
   
     // The force simulation mutates links and nodes, so create a copy
@@ -184,22 +258,26 @@ function tryInfect(node, probability) {
           .attr("fill", d => nodeColor[+ d.infected]);
     }
 
-    function spreadInfection(intervalID, probabilities) {
+    // Spread the infection to the nodes.
+    function spreadInfection(intervalID, probabilities, spreadRate) {
+      // Stop the simulation if all nodes are infected.
       if (nodes.filter(node => !node.infected).length == 0) {
         clearInterval(intervalID);
       }
 
+      // We need to store the newly infected nodes separately to avoid
+      // infecting more nodes than intended in the same tick.
       const newlyInfected = [];
       const infectedLinks = links.filter(link => link.value == 3);
 
       infectedLinks.forEach(link => {
         if (link.source.infected && !newlyInfected.includes(link.source)) {
-          if (tryInfect(link.target, probabilities[link.type])) {
+          if (tryInfect(link.target, probabilities[link.type], spreadRate)) {
             newlyInfected.push(link.target);
           }
         }
         if (link.target.infected && !newlyInfected.includes(link.target)) {
-          if (tryInfect(link.source, probabilities[link.type])) {
+          if (tryInfect(link.source, probabilities[link.type], spreadRate)) {
             newlyInfected.push(link.source);
           }
         }
@@ -211,6 +289,7 @@ function tryInfect(node, probability) {
         }
       });
 
+      // Update the chart every 5 ticks.
       if (tickCounter == 0) {
         Chart.createSVG(this.infectedAmount);
         this.infectedAmount.push({x: (this.infectedAmount[this.infectedAmount.length - 1].x + 5), y: newlyInfected.length});
@@ -220,9 +299,11 @@ function tryInfect(node, probability) {
         this.infectedAmount[this.infectedAmount.length - 1].y += newlyInfected.length;
       }
 
+      // Restart the simulation to update the nodes and links.
       simulation.restart();
     }
 
+    // Bind the spreadInfection function to the simulation.
     this.spreadInfection = spreadInfection.bind(this);
     
     // Reheat the simulation when drag starts, and fix the subject position.
@@ -249,23 +330,40 @@ function tryInfect(node, probability) {
     return svg.node();
   }
 
+  /**
+   * Creates the initial SVG elements for the simulation and the chart.
+   */
   async createSVG() {
-    const chart = await this.drawChart(0, 0.1);
-    d3sel.select("body").append(() => chart);
+    const simulation = await this.drawSimulation(0, 0.1);
+    d3sel.select("body").append(() => simulation);
     Chart.createSVG(this.infectedAmount[0]);
   }
 
+  /**
+   * Remove the old SVG elements and create new ones.
+   * @param {Number} nodeCount - The amount of nodes in the graph.
+   * @param {Number} infectedPercentage - The percentage of nodes that are infected.
+   */
   async modifySVG(nodeCount, infectedPercentage) {
-    const chart = await this.drawChart(nodeCount, infectedPercentage);
+    const simulation = await this.drawSimulation(nodeCount, infectedPercentage);
     d3sel.selectAll("svg").remove();
-    d3sel.select("body").append(() => chart);
+    d3sel.select("body").append(() => simulation);
 
+    // Reset the infected amount to the initial values.
     this.infectedAmount = [{x: 0, y: 0}, {x: 5, y: 0}];
     Chart.createSVG(this.infectedAmount[0]);
   }
 }
 
+/**
+ * Represents a chart of the newly infected nodes.
+ */
 class Chart {
+  /**
+   * Draws the chart of the newly infected nodes.
+   * @param {Array} infectedAmount - The amount of infected nodes at each tick.
+   * @returns {Element} - The SVG element of the chart.
+   */
   static async drawChart(infectedAmount) {
     // Specify the chart’s dimensions.
     const width = 800;
@@ -313,6 +411,7 @@ class Chart {
         .attr("text-anchor", "start")
         .text("Newly infected");
 
+    // Create a line generator.
     const line = d3sh.line()
         .x(d => x(d.x))
         .y(d => y(d.y));
@@ -327,7 +426,12 @@ class Chart {
     return svg.node();
   }
 
+  /**
+   * Creates the SVG element of the chart.
+   * @param {Array} infectedAmount - The amount of infected nodes at each tick.
+   */
   static async createSVG(infectedAmount) {
+    // Remove the old chart if it exists.
     if (d3sel.selectAll("svg")._groups[0].length > 1) {
       d3sel.selectAll("svg")._groups[0][1].remove();
     }
@@ -337,164 +441,205 @@ class Chart {
   }
 }
 
-let simulation = new Simulation();
-simulation.createSVG();
+/**
+ * Represents the data and the user interface of the simulation.
+ */
+class Data {
+  /**
+   * Initializes the data and the user interface.
+   * @constructor
+   */
+  constructor() {
+    this.nodeSlider = document.getElementById("nodeCount");
+    this.infectedSlider = document.getElementById("infectedPercentage");
+    this.startButton = document.getElementById("startButton");
+    this.stopButton = document.getElementById("stopButton");
+    this.scenarioMenu = document.getElementById("scenarioMenu");
+    this.spreadRate = 1;
+    this.intervalID;
+    this.probabilities = [0.1, 0.05, 0.05, 0.01];
+    this.modifiedProbabilities = [];
+    this.simulation = new Simulation();
 
-let nodeSlider = document.getElementById("nodeCount");
-let infectedSlider = document.getElementById("infectedPercentage");
-let startButton = document.getElementById("startButton");
-let stopButton = document.getElementById("stopButton");
-let scenario = document.getElementById("scenario");
-let intervalID;
-let spreadRate;
+    const sliderCallback = async () => {
+      await this.simulation.modifySVG(Number(this.nodeSlider.value), Number(this.infectedSlider.value) / 100);
+    };
 
-function updateSpreadRate() {
-  const elements = document.getElementsByName("spread");
-  for (let i = 0; i < elements.length; i++) {
-    if (elements[i].checked) {
-      spreadRate = elements[i].value;
+    this.simulation.createSVG();
+
+    this.nodeSlider.oninput = sliderCallback;
+    this.infectedSlider.oninput = sliderCallback;
+
+    this.startButton.onclick = () => { 
+      this.modifyProbabilities();
+      this.updateSpreadRate();
+      this.intervalID = setInterval(() => this.simulation.spreadInfection(this.intervalID, this.modifiedProbabilities, this.spreadRate), 1000); 
+      this.disableInputs();
+    };
+
+    this.stopButton.onclick = () => { 
+      clearInterval(this.intervalID); 
+      this.enableInputs();
+    };
+
+    this.scenarioMenu.onchange = () => {
+      this.updateScenario();
+    }
+  }
+
+  /**
+   * Updates the spread rate based on the user's selection.
+   */
+  updateSpreadRate() {
+    const elements = document.getElementsByName("spread");
+    for (let i = 0; i < elements.length; i++) {
+      if (elements[i].checked) {
+        this.spreadRate = elements[i].value;
+      }
+    }
+  }
+
+  /**
+   * Modifies the probabilities based on the user's selection.
+   */
+  modifyProbabilities() {
+    let inputs = document.getElementById("restrictions").getElementsByTagName("input");
+    this.modifiedProbabilities = this.probabilities.map((i) => i);
+  
+    for (let i = 0; i < inputs.length; i++) {
+      if (inputs[i].checked) {
+        this.modifiedProbabilities[0] *= inputs[i].dataset.family ?? 1;
+        this.modifiedProbabilities[1] *= inputs[i].dataset.friends ?? 1;
+        this.modifiedProbabilities[2] *= inputs[i].dataset.workSchool ?? 1;
+        this.modifiedProbabilities[3] *= inputs[i].dataset.strangers ?? 1;
+      }
+    }
+  }
+
+  /**
+   * Disables or enables the user inputs.
+   * @param {Boolean} enabled 
+   */
+  setInputState(enabled) {
+    this.startButton.disabled = enabled;
+    this.stopButton.disabled = !enabled;
+
+    let spreadInputs = document.getElementsByName("spread");
+    for (let i = 0; i < spreadInputs.length; i++) {
+      spreadInputs[i].disabled = enabled;
+    }
+
+    let restrictionsInputs = document.getElementById("restrictions").getElementsByTagName("input");
+    for (let i = 0; i < restrictionsInputs.length; i++) {
+      restrictionsInputs[i].disabled = enabled;
+    }
+  }
+
+  /**
+   * Disables the user inputs when the simulation is running.
+   */
+  disableInputs() {
+    this.setInputState(true);
+  }
+
+  /**
+   * Enables the user inputs when the simulation is stopped.
+   */
+  enableInputs() {
+    this.setInputState(false);
+  }
+
+  /**
+   * Changes the chosen spread rate based on the user's selection.
+   * @param {String} id - The id of the chosen spread rate.
+   */
+  changeCheckedSpread(id) {
+    let elements = document.getElementsByName("spread");
+    for (let i = 0; i < elements.length; i++) {
+      elements[i].checked = false;
+    }
+  
+    document.getElementById(id).checked = true;
+  }
+
+  /**
+   * Changes the selection of the restrictions.
+   * @param {Boolen} selected - Whether the restrictions should be selected or not.
+   */
+  changeRestrictionsSelection(selected) {
+    let elements = document.getElementById("restrictions").getElementsByTagName("input");
+    for (let i = 0; i < elements.length; i++) {
+      elements[i].checked = selected;
+    }
+  }
+  
+  /**
+   * Unselects all the restrictions.
+   */
+  unselectAllRestrictions() {
+    this.changeRestrictionsSelection(false);
+  }
+  
+  /**
+   * Selects all the restrictions.
+   */
+  selectAllRestrictions() {
+    this.changeRestrictionsSelection(true);
+  }
+  
+  /**
+   * Selects some of the restrictions.
+   * @param {Array} checkedRestrictions - The restrictions to be selected.
+   */
+  selectSomeRestrictions(checkedRestrictions) {
+    this.unselectAllRestrictions();
+  
+    let elements = document.getElementById("restrictions").getElementsByTagName("input");
+    for (let i = 0; i < elements.length; i++) {
+      if (checkedRestrictions.includes(elements[i].id)) {
+        elements[i].checked = true;
+      }
+    }
+  }
+  
+  /**
+   * Updates the user interface based on the user's selection of the scenario.
+   */
+  updateScenario() {
+    let scenario = document.getElementById("scenarioMenu").value;
+    switch (scenario) {
+      case "0":
+        return;
+      case "1":
+        this.changeCheckedSpread("spreadLow");
+        this.unselectAllRestrictions();
+        break;
+      case "2":
+        this.changeCheckedSpread("spreadLow");
+        this.selectAllRestrictions();
+        break;
+      case "3":
+        this.changeCheckedSpread("spreadMedium");
+        this.unselectAllRestrictions();
+        break;
+      case "4":
+        this.changeCheckedSpread("spreadMedium");
+        this.selectSomeRestrictions(["respirators", "quarantine", "distancing"])
+        break;
+      case "5":
+        this.changeCheckedSpread("spreadMedium");
+        this.selectAllRestrictions();
+        break;
+      case "6":
+        this.changeCheckedSpread("spreadHigh");
+        this.unselectAllRestrictions();
+        break;
+      case "7":
+        this.changeCheckedSpread("spreadHigh");
+        this.selectAllRestrictions();
+        break;
     }
   }
 }
 
-const probabilities = [0.1, 0.05, 0.05, 0.01];
-let modifiedProbabilities = [];
-
-function modifyProbabilities() {
-  let inputs = document.getElementById("restrictions").getElementsByTagName("input");
-  modifiedProbabilities = probabilities.map((i) => i);
-
-  for (let i = 0; i < inputs.length; i++) {
-    if (inputs[i].checked) {
-      modifiedProbabilities[0] *= inputs[i].dataset.family ?? 1;
-      modifiedProbabilities[1] *= inputs[i].dataset.friends ?? 1;
-      modifiedProbabilities[2] *= inputs[i].dataset.workSchool ?? 1;
-      modifiedProbabilities[3] *= inputs[i].dataset.strangers ?? 1;
-    }
-  }
-}
-
-function disableInputs() {
-  startButton.disabled = true; 
-  stopButton.disabled = false; 
-
-  updateSpreadRate();
-  let elements = document.getElementsByName("spread");
-  for (let i = 0; i < elements.length; i++) {
-    elements[i].disabled = true;
-  }
-
-  let inputs = document.getElementById("restrictions").getElementsByTagName("input");
-  for (let i = 0; i < inputs.length; i++) {
-    inputs[i].disabled = true;
-  }
-}
-
-function enableInputs() {
-  startButton.disabled = false; 
-  stopButton.disabled = true; 
-
-  let elements = document.getElementsByName("spread");
-  for (let i = 0; i < elements.length; i++) {
-    elements[i].disabled = false;
-  }
-
-  let inputs = document.getElementById("restrictions").getElementsByTagName("input");
-  for (let i = 0; i < inputs.length; i++) {
-    inputs[i].disabled = false;
-  }
-}
-
-function changeCheckedSpread(id) {
-  let elements = document.getElementsByName("spread");
-  for (let i = 0; i < elements.length; i++) {
-    elements[i].checked = false;
-  }
-
-  document.getElementById(id).checked = true;
-}
-
-function changeRestrictionsSelection(bool) {
-  let elements = document.getElementById("restrictions").getElementsByTagName("input");
-  for (let i = 0; i < elements.length; i++) {
-    elements[i].checked = bool;
-  }
-}
-
-function unselectAllRestrictions() {
-  changeRestrictionsSelection(false);
-}
-
-function selectAllRestrictions() {
-  changeRestrictionsSelection(true);
-}
-
-function selectSomeRestrictions(checkedRestrictions) {
-  unselectAllRestrictions();
-
-  let elements = document.getElementById("restrictions").getElementsByTagName("input");
-  for (let i = 0; i < elements.length; i++) {
-    if (checkedRestrictions.includes(elements[i].id)) {
-      elements[i].checked = true;
-    }
-  }
-}
-
-function updateScenario() {
-  let scenario = document.getElementById("scenario").value;
-  switch (scenario) {
-    case "0":
-      return;
-    case "1":
-      changeCheckedSpread("spreadLow");
-      unselectAllRestrictions();
-      break;
-    case "2":
-      changeCheckedSpread("spreadLow");
-      selectAllRestrictions();
-      break;
-    case "3":
-      changeCheckedSpread("spreadMedium");
-      unselectAllRestrictions();
-      break;
-    case "4":
-      changeCheckedSpread("spreadMedium");
-      selectSomeRestrictions(["respirators", "quarantine", "distancing"])
-      break;
-    case "5":
-      changeCheckedSpread("spreadMedium");
-      selectAllRestrictions();
-      break;
-    case "6":
-      changeCheckedSpread("spreadHigh");
-      unselectAllRestrictions();
-      break;
-    case "7":
-      changeCheckedSpread("spreadHigh");
-      selectAllRestrictions();
-      break;
-  }
-
-}
-
-const sliderCallback = async function() {
-  await simulation.modifySVG(Number(nodeSlider.value), Number(infectedSlider.value) / 100);
- }
-
-// Update the current slider value (each time you drag the slider handle)
-nodeSlider.oninput = sliderCallback;
-infectedSlider.oninput = sliderCallback;
-
-startButton.onclick = function() { 
-  modifyProbabilities(); 
-  intervalID = setInterval(() => simulation.spreadInfection(intervalID, modifiedProbabilities), 1000); 
-  disableInputs();
-};
-stopButton.onclick = function() { 
-  clearInterval(intervalID); 
-  enableInputs();
-};
-
-scenario.onchange = function() {
-  updateScenario();
-}
+let data = new Data();
