@@ -186,7 +186,7 @@ function tryInfect(node, probability, spreadRate) {
    * @param {Number} infectedPercentage - The percentage of nodes that are infected.
    * @returns {Element} - The SVG element of the simulation.
    */
-  async drawSimulation(nodeCount, infectedPercentage) {
+  drawSimulation(nodeCount, infectedPercentage) {
     let data = this.createData(nodeCount, infectedPercentage);
     let tickCounter = 5;
 
@@ -333,8 +333,8 @@ function tryInfect(node, probability, spreadRate) {
   /**
    * Creates the initial SVG elements for the simulation and the chart.
    */
-  async createSVG() {
-    const simulation = await this.drawSimulation(0, 0.1);
+  createSVG() {
+    const simulation = this.drawSimulation(0, 0.1);
     d3sel.select("body").append(() => simulation);
     Chart.createSVG(this.infectedAmount[0]);
   }
@@ -344,8 +344,8 @@ function tryInfect(node, probability, spreadRate) {
    * @param {Number} nodeCount - The amount of nodes in the graph.
    * @param {Number} infectedPercentage - The percentage of nodes that are infected.
    */
-  async modifySVG(nodeCount, infectedPercentage) {
-    const simulation = await this.drawSimulation(nodeCount, infectedPercentage);
+  modifySVG(nodeCount, infectedPercentage) {
+    const simulation = this.drawSimulation(nodeCount, infectedPercentage);
     d3sel.selectAll("svg").remove();
     d3sel.select("body").append(() => simulation);
 
@@ -364,7 +364,7 @@ class Chart {
    * @param {Array} infectedAmount - The amount of infected nodes at each tick.
    * @returns {Element} - The SVG element of the chart.
    */
-  static async drawChart(infectedAmount) {
+  static drawChart(infectedAmount) {
     // Specify the chart’s dimensions.
     const width = 800;
     const height = 300;
@@ -430,13 +430,13 @@ class Chart {
    * Creates the SVG element of the chart.
    * @param {Array} infectedAmount - The amount of infected nodes at each tick.
    */
-  static async createSVG(infectedAmount) {
+  static createSVG(infectedAmount) {
     // Remove the old chart if it exists.
     if (d3sel.selectAll("svg")._groups[0].length > 1) {
       d3sel.selectAll("svg")._groups[0][1].remove();
     }
 
-    const chart = await Chart.drawChart(infectedAmount);
+    const chart = Chart.drawChart(infectedAmount);
     d3sel.select("body").append(() => chart);
   }
 }
@@ -461,8 +461,8 @@ class Data {
     this.modifiedProbabilities = [];
     this.simulation = new Simulation();
 
-    const sliderCallback = async () => {
-      await this.simulation.modifySVG(Number(this.nodeSlider.value), Number(this.infectedSlider.value) / 100);
+    const sliderCallback = () => {
+      this.simulation.modifySVG(Number(this.nodeSlider.value), Number(this.infectedSlider.value) / 100);
     };
 
     this.simulation.createSVG();
