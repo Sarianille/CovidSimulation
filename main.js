@@ -56,7 +56,7 @@ function tryInfect(node, probability, spreadRate) {
    * Contains the amount of infected nodes at each tick.
    * Starts with helper values for the correct drawing of the chart in the beginning.
    */
-  infectedAmount = [{x: 0, y: 0}, {x: 5, y: 0}];
+  infectedAmounts = [{x: 0, y: 0}, {x: 5, y: 0}];
 
   /**
    * Decides the amount of nodes in the graph.
@@ -336,7 +336,7 @@ function tryInfect(node, probability, spreadRate) {
   createSVG() {
     const simulation = this.drawSimulation(0, 0.1);
     d3sel.select("body").append(() => simulation);
-    Chart.createSVG(this.infectedAmount[0]);
+    Chart.createSVG(this.infectedAmounts[0]);
   }
 
   /**
@@ -350,8 +350,8 @@ function tryInfect(node, probability, spreadRate) {
     d3sel.select("body").append(() => simulation);
 
     // Reset the infected amount to the initial values.
-    this.infectedAmount = [{x: 0, y: 0}, {x: 5, y: 0}];
-    Chart.createSVG(this.infectedAmount[0]);
+    this.infectedAmounts = [{x: 0, y: 0}, {x: 5, y: 0}];
+    Chart.createSVG(this.infectedAmounts[0]);
   }
 }
 
