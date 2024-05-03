@@ -60,26 +60,26 @@ function tryInfect(node, probability, spreadRate) {
 
   /**
    * Decides the amount of nodes in the graph.
-   * @param {Number} nodesAmount - The amount of nodes specified by the user.
+   * @param {Number} nodeCount - The amount of nodes specified by the user.
    * @returns {Number} - The amount of nodes to be used in the graph.
    */
-  decideNodeCount(nodesAmount) {
+  decideNodeCount(nodeCount) {
     // If the user has not specified the amount of nodes, generate a random amount.
-    if (nodesAmount == 0) {
+    if (nodeCount == 0) {
       return d3r.randomInt(10, 100)();
     } else {
-      return nodesAmount;
+      return nodeCount;
     }
   }
 
   /**
    * Creates the nodes in the graph.
    * @param {Array} nodes - The array to store the nodes in.
-   * @param {Number} nodesAmount - The amount of nodes to be created.
+   * @param {Number} nodeCount - The amount of nodes to be created.
    * @param {Number} percentageOfInfected - The percentage of nodes that are infected.
    */
-  createNodes(nodes, nodesAmount, percentageOfInfected) {
-    for (let i = 0; i < nodesAmount; i++) {
+  createNodes(nodes, nodeCount, percentageOfInfected) {
+    for (let i = 0; i < nodeCount; i++) {
       nodes.push(new GraphNode(d3r.randomBernoulli(percentageOfInfected)()));
     }
   }
@@ -144,15 +144,15 @@ function tryInfect(node, probability, spreadRate) {
    * Creates the links in the graph.
    * @param {Array} links - The array to store the links in.
    * @param {Array} nodes - The nodes in the graph.
-   * @param {Number} nodesAmount - The amount of nodes in the graph.
+   * @param {Number} nodeCount - The amount of nodes in the graph.
    */
-  createLinks(links, nodes, nodesAmount) {
-    for (let i = 0; i < nodesAmount * 2; i++) {
-      const source = d3r.randomInt(0, nodesAmount)();
-      let target = d3r.randomInt(0, nodesAmount)();
+  createLinks(links, nodes, nodeCount) {
+    for (let i = 0; i < nodeCount * 2; i++) {
+      const source = d3r.randomInt(0, nodeCount)();
+      let target = d3r.randomInt(0, nodeCount)();
       // Make sure the source and target are not the same.
       while (source === target) {
-        target = d3r.randomInt(0, nodesAmount)();
+        target = d3r.randomInt(0, nodeCount)();
       }
 
       const value = nodes[source].infected || nodes[target].infected ? 3 : 1;
@@ -165,17 +165,17 @@ function tryInfect(node, probability, spreadRate) {
 
   /**
    * Creates the nodes and links in the graph.
-   * @param {Number} nodesAmount - The amount of nodes in the graph.
+   * @param {Number} nodeCount - The amount of nodes in the graph.
    * @param {Number} percentageOfInfected - The percentage of nodes that are infected.
    * @returns {Object} - The nodes and links in the graph.
    */
-  createData(nodesAmount, percentageOfInfected) {
+  createData(nodeCount, percentageOfInfected) {
     const nodes = [];
     const links = [];
-    let actualNodesAmount = this.decideNodeCount(nodesAmount);
+    let actualnodeCount = this.decideNodeCount(nodeCount);
 
-    this.createNodes(nodes, actualNodesAmount, percentageOfInfected);
-    this.createLinks(links, nodes, actualNodesAmount);
+    this.createNodes(nodes, actualnodeCount, percentageOfInfected);
+    this.createLinks(links, nodes, actualnodeCount);
 
     return { nodes, links };
   }
