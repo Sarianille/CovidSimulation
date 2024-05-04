@@ -428,15 +428,15 @@ class Chart {
 
   /**
    * Creates the SVG element of the chart.
-   * @param {Array} infectedAmount - The amount of infected nodes at each tick.
+   * @param {Array} infectedAmounts - The amount of infected nodes at each tick.
    */
-  static createSVG(infectedAmount) {
+  static createSVG(infectedAmounts) {
     // Remove the old chart if it exists.
     if (d3sel.selectAll("svg")._groups[0].length > 1) {
       d3sel.selectAll("svg")._groups[0][1].remove();
     }
 
-    const chart = Chart.drawChart(infectedAmount);
+    const chart = Chart.drawChart(infectedAmounts);
     d3sel.select("body").append(() => chart);
   }
 }
