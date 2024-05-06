@@ -291,12 +291,12 @@ function tryInfect(node, probability, spreadRate) {
 
       // Update the chart every 5 ticks.
       if (tickCounter == 0) {
-        Chart.createSVG(this.infectedAmount);
-        this.infectedAmount.push({x: (this.infectedAmount[this.infectedAmount.length - 1].x + 5), y: newlyInfected.length});
+        Chart.createSVG(this.infectedAmounts);
+        this.infectedAmounts.push({x: (this.infectedAmounts[this.infectedAmounts.length - 1].x + 5), y: newlyInfected.length});
         tickCounter = 5;
       } else {
         tickCounter--;
-        this.infectedAmount[this.infectedAmount.length - 1].y += newlyInfected.length;
+        this.infectedAmounts[this.infectedAmounts.length - 1].y += newlyInfected.length;
       }
 
       // Restart the simulation to update the nodes and links.
@@ -361,10 +361,10 @@ function tryInfect(node, probability, spreadRate) {
 class Chart {
   /**
    * Draws the chart of the newly infected nodes.
-   * @param {Array} infectedAmount - The amount of infected nodes at each tick.
+   * @param {Array} infectedAmounts - The amount of infected nodes at each tick.
    * @returns {Element} - The SVG element of the chart.
    */
-  static drawChart(infectedAmount) {
+  static drawChart(infectedAmounts) {
     // Specify the chart’s dimensions.
     const width = 800;
     const height = 300;
@@ -421,7 +421,7 @@ class Chart {
         .attr("fill", "none")
         .attr("stroke", "red")
         .attr("stroke-width", 1.5)
-        .attr("d", line(infectedAmount));
+        .attr("d", line(infectedAmounts));
 
     return svg.node();
   }

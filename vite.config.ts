@@ -5,5 +5,6 @@ export default defineConfig({
     clearScreen: false,
     server: {
         host: "127.0.0.1",
-    }
+    },
+    root: 'src'
 })
