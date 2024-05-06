@@ -22,4 +22,4 @@ you can download it from [here](https://nodejs.org/).
 
 The user and developer documentation can be found in the `docs` directory.
 
-You can also generate a JSDoc documentation by running `npx jsdoc src/main.js` in the terminal in the project directory.
+You can also generate a JSDoc documentation by running `npx jsdoc src/main.js` in the terminal while in the project directory.
