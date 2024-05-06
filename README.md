@@ -17,3 +17,9 @@ you can download it from [here](https://nodejs.org/).
 
 3. Accessing the simulation:
 - Open a browser and go to the link provided by Vite.
+
+## Documentation
+
+The user and developer documentation can be found in the `docs` directory.
+
+You can also generate a JSDoc documentation by running `npx jsdoc src/main.js` in the terminal in the project directory.
