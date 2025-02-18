@@ -1,0 +1,359 @@
+class ConfigGenerator {
+  constructor(defaultConfig) {
+    this.state = defaultConfig;
+    
+    this.setupPage = null;
+    this.initializeSetupPage();
+    this.addEventListeners();
+  }
+
+  initializeSetupPage() {
+    document.body.innerHTML = '';
+    
+    this.setupPage = document.createElement('div');
+    this.setupPage.id = 'config-generator';
+    this.setupPage.className = 'generator-container';
+    
+    this.renderSetupPage();
+    document.body.appendChild(this.setupPage);
+  }
+
+  renderSetupPage() {
+    this.setupPage.innerHTML = `
+      <h1>Simulation Configuration</h1>
+      
+      <div class="section">
+        <h2>Node Configuration</h2>
+        ${this.renderNodeConfig()}
+      </div>
+      
+      <div class="section">
+        <h2>Node Colors</h2>
+        ${this.renderColors()}
+      </div>
+      
+      <div class="section">
+        <h2>Connection Types</h2>
+        <div id="connectionTypes">
+          ${this.renderConnectionTypes()}
+        </div>
+        <button type="button" id="addConnectionType">Add Connection Type</button>
+      </div>
+      
+      <div class="section">
+        <h2>Spread Rates</h2>
+        <div id="spreadRates">
+          ${this.renderSpreadRates()}
+        </div>
+        <button type="button" id="addSpreadRate">Add Spread Rate</button>
+      </div>
+      
+      <div class="section">
+        <h2>Restrictions</h2>
+        <div id="restrictions">
+          ${this.renderRestrictions()}
+        </div>
+        <button type="button" id="addRestriction">Add Restriction</button>
+      </div>
+
+      <div class="section">
+        <h2>Scenarios</h2>
+        <div id="scenarios">
+          ${this.renderScenarios()}
+        </div>
+        <button type="button" id="addScenario">Add Scenario</button>
+      </div>
+      
+      <button type="button" class="submit-button" id="createSimulation">Create Simulation</button>
+    `;
+  }
+
+  updateState() {
+    this.state.nodeCount = {
+      min: parseInt(document.getElementById('nodeCountMin').value),
+      max: parseInt(document.getElementById('nodeCountMax').value)
+    };
+    this.state.infectedPercentage = {
+      min: parseInt(document.getElementById('infectedMin').value),
+      max: parseInt(document.getElementById('infectedMax').value),
+      default: parseInt(document.getElementById('infectedDefault').value)
+    };
+    this.state.nodeColors = {
+      healthy: document.getElementById('healthyColor').value,
+      infected: document.getElementById('infectedColor').value
+    };
+
+    this.state.connectionTypes = this.collectConnectionTypes();
+    this.state.spreadRates = this.collectSpreadRates();
+    this.state.restrictions = this.collectRestrictions();
+    this.state.scenarios = this.collectScenarios();
+  }
+
+  addEventListeners() {
+    document.getElementById('addConnectionType').addEventListener('click', () => {
+      this.updateState();
+      this.state.connectionTypes.push({
+        id: '', label: '', color: '#000000', baseProbability: 1
+      });
+      this.refreshDynamicSections();
+    });
+
+    document.getElementById('addSpreadRate').addEventListener('click', () => {
+      this.updateState();
+      this.state.spreadRates.push({
+        id: '', label: '', value: 1
+      });
+      this.refreshDynamicSections();
+    });
+
+    document.getElementById('addRestriction').addEventListener('click', () => {
+      this.updateState();
+      const multipliers = {};
+      this.state.connectionTypes.forEach(type => {
+        multipliers[type.id] = 1;
+      });
+      this.state.restrictions.push({
+        id: '', label: '', tooltip: '', multipliers
+      });
+      this.refreshDynamicSections();
+    });
+
+    document.getElementById('addScenario').addEventListener('click', () => {
+      this.updateState();
+      this.state.scenarios.push({
+        label: '', spreadRate: '', restrictions: []
+      });
+      this.refreshDynamicSections();
+    });
+
+    // Delete button listener using event delegation
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-btn')) {
+        const item = e.target.closest('div[class$="-item"]');
+        if (item) {
+          this.updateState();
+          if (item.classList.contains('connection-type-item')) {
+            const index = Array.from(document.querySelectorAll('.connection-type-item')).indexOf(item);
+            this.state.connectionTypes.splice(index, 1);
+          } else if (item.classList.contains('spread-rate-item')) {
+            const index = Array.from(document.querySelectorAll('.spread-rate-item')).indexOf(item);
+            this.state.spreadRates.splice(index, 1);
+          } else if (item.classList.contains('restriction-item')) {
+            const index = Array.from(document.querySelectorAll('.restriction-item')).indexOf(item);
+            this.state.restrictions.splice(index, 1);
+          } else if (item.classList.contains('scenario-item')) {
+            const index = Array.from(document.querySelectorAll('.scenario-item')).indexOf(item);
+            this.state.scenarios.splice(index, 1);
+          }
+          this.refreshDynamicSections();
+        }
+      }
+    });
+
+    // Blur event listener for when elements lose focus
+    document.addEventListener('blur', (e) => {
+      if (e.target.matches('input[type="text"], input[type="number"], textarea, select')) {
+        if (e.target.closest('.section')) {
+          this.updateState();
+          this.refreshDynamicSections();
+        }
+      }
+    }, true);
+
+    document.getElementById('createSimulation').addEventListener('click', () => {
+      this.updateState();
+      document.body.innerHTML = '';
+      // new SimulationController(this.state);
+
+      // For testing purposes:
+      console.log(this.state);
+    });
+  }
+
+  refreshDynamicSections() {
+    // Only refresh sections that depend on other data
+    document.getElementById('connectionTypes').innerHTML = this.renderConnectionTypes();
+    document.getElementById('spreadRates').innerHTML = this.renderSpreadRates();
+    document.getElementById('restrictions').innerHTML = this.renderRestrictions();
+    document.getElementById('scenarios').innerHTML = this.renderScenarios();
+  }
+
+  collectConnectionTypes() {
+    const types = [];
+    document.querySelectorAll('.connection-type-item').forEach(item => {
+      types.push({
+        id: item.querySelector('.type-id').value,
+        label: item.querySelector('.type-label').value,
+        color: item.querySelector('.type-color').value,
+        baseProbability: parseFloat(item.querySelector('.type-probability').value)
+      });
+    });
+    return types;
+  }
+
+  collectSpreadRates() {
+    const rates = [];
+    document.querySelectorAll('.spread-rate-item').forEach(item => {
+      rates.push({
+        id: item.querySelector('.rate-id').value,
+        label: item.querySelector('.rate-label').value,
+        value: parseFloat(item.querySelector('.rate-value').value)
+      });
+    });
+    return rates;
+  }
+
+  collectRestrictions() {
+    const restrictions = [];
+    document.querySelectorAll('.restriction-item').forEach(item => {
+      const multipliers = {};
+      item.querySelectorAll('.multiplier-value').forEach(input => {
+        multipliers[input.dataset.connectionType] = parseFloat(input.value);
+      });
+      
+      restrictions.push({
+        id: item.querySelector('.restriction-id').value,
+        label: item.querySelector('.restriction-label').value,
+        tooltip: item.querySelector('.restriction-tooltip').value,
+        multipliers
+      });
+    });
+    return restrictions;
+  }
+
+  collectScenarios() {
+    const scenarios = [];
+    document.querySelectorAll('.scenario-item').forEach(item => {
+      const enabledRestrictions = Array.from(
+        item.querySelectorAll('.scenario-restrictions input:checked')
+      ).map(checkbox => checkbox.value);
+
+      scenarios.push({
+        label: item.querySelector('.scenario-label').value,
+        spreadRate: item.querySelector('.scenario-spread-rate').value,
+        restrictions: enabledRestrictions
+      });
+    });
+    return scenarios;
+  }
+
+  renderNodeConfig() {
+    return `
+      <div class="input-group">
+        <h3>Node Count Range</h3>
+        <label>
+          Minimum:
+          <input type="number" id="nodeCountMin" value="${this.state.nodeCount.min}">
+        </label>
+        <label>
+          Maximum:
+          <input type="number" id="nodeCountMax" value="${this.state.nodeCount.max}">
+        </label>
+      </div>
+      
+      <div class="input-group">
+        <h3>Infected Percentage Range</h3>
+        <label>
+          Minimum:
+          <input type="number" id="infectedMin" value="${this.state.infectedPercentage.min}">
+        </label>
+        <label>
+          Maximum:
+          <input type="number" id="infectedMax" value="${this.state.infectedPercentage.max}">
+        </label>
+        <label>
+          Default:
+          <input type="number" id="infectedDefault" value="${this.state.infectedPercentage.default}">
+        </label>
+      </div>
+    `;
+  }
+
+  renderColors() {
+    return `
+      <div class="input-group">
+        <label>
+          Healthy Node Color:
+          <input type="color" id="healthyColor" value="${this.state.nodeColors.healthy}">
+        </label>
+        <label>
+          Infected Node Color:
+          <input type="color" id="infectedColor" value="${this.state.nodeColors.infected}">
+        </label>
+      </div>
+    `;
+  }
+
+  renderConnectionTypes() {
+    return this.state.connectionTypes.map(type => `
+      <div class="connection-type-item">
+        <input type="text" placeholder="ID" value="${type.id}" class="type-id">
+        <input type="text" placeholder="Label" value="${type.label}" class="type-label">
+        <input type="color" value="${type.color}" class="type-color">
+        <input type="number" step="0.01" placeholder="Base Probability" value="${type.baseProbability}" class="type-probability">
+        <button type="button" class="delete-btn">Delete</button>
+      </div>
+    `).join('');
+  }
+
+  renderSpreadRates() {
+    return this.state.spreadRates.map(rate => `
+      <div class="spread-rate-item">
+        <input type="text" placeholder="ID" value="${rate.id}" class="rate-id">
+        <input type="text" placeholder="Label" value="${rate.label}" class="rate-label">
+        <input type="number" step="0.1" placeholder="Value" value="${rate.value}" class="rate-value">
+        <button type="button" class="delete-btn">Delete</button>
+      </div>
+    `).join('');
+  }
+
+  renderRestrictions() {
+    return this.state.restrictions.map(restriction => `
+      <div class="restriction-item">
+        <div class="basic-info">
+          <input type="text" placeholder="ID" value="${restriction.id}" class="restriction-id">
+          <input type="text" placeholder="Label" value="${restriction.label}" class="restriction-label">
+          <textarea placeholder="Tooltip" class="restriction-tooltip">${restriction.tooltip}</textarea>
+        </div>
+        <div class="multipliers">
+          ${this.state.connectionTypes.map(type => `
+            <label>${type.label} multiplier:
+              <input type="number" step="0.01" 
+                     value="${restriction.multipliers[type.id] ?? 1}"
+                     data-connection-type="${type.id}"
+                     class="multiplier-value">
+            </label>
+          `).join('')}
+        </div>
+        <button type="button" class="delete-btn">Delete</button>
+      </div>
+    `).join('');
+  }
+
+  renderScenarios() {
+    return this.state.scenarios.map(scenario => `
+      <div class="scenario-item">
+        <input type="text" placeholder="Label" value="${scenario.label}" class="scenario-label">
+        <select class="scenario-spread-rate">
+          <option value="">Select Spread Rate</option>
+          ${this.state.spreadRates.map(rate => 
+            `<option value="${rate.id}" ${rate.id === scenario.spreadRate ? 'selected' : ''}>
+              ${rate.label}
+            </option>`
+          ).join('')}
+        </select>
+        <div class="scenario-restrictions">
+          <h4>Enabled Restrictions:</h4>
+          ${this.state.restrictions.map(restriction => `
+            <label>
+              <input type="checkbox" value="${restriction.id}" 
+                     ${scenario.restrictions.includes(restriction.id) ? 'checked' : ''}>
+              ${restriction.label}
+            </label>
+          `).join('')}
+        </div>
+        <button type="button" class="delete-btn">Delete</button>
+      </div>
+    `).join('');
+  }
+}
