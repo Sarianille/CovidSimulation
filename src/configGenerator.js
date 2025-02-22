@@ -151,7 +151,7 @@ class ConfigGenerator {
     });
 
     // Blur event listener for when elements lose focus
-    document.addEventListener('blur', (e) => {
+    document.addEventListener('change', (e) => {
       if (e.target.matches('input[type="text"], input[type="number"], textarea, select')) {
         if (e.target.closest('.section')) {
           this.updateState();
