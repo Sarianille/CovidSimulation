@@ -26,16 +26,19 @@ class SimulationLogic {
   infectedAmounts = [{ x: 0, y: 0 }, { x: 5, y: 0 }];
   tickCounter = 5;
 
-  constructor(probabilities, spreadRate) {
+  constructor(config) {
     this.nodes = [];
     this.links = [];
-    this.probabilities = probabilities;
-    this.spreadRate = spreadRate;
+
     this.intervalID = null;
+    this.config = config;
+
+    this.probabilities = config.connectionTypes.map(type => type.baseProbability);
+    this.spreadRate = 1;
   }
 
   decideNodeCount(nodeCount) {
-    return nodeCount === 0 ? d3r.randomInt(10, 100)() : nodeCount;
+    return nodeCount === 0 ? d3r.randomInt(this.config.nodeCount.min, this.config.nodeCount.max)() : nodeCount;
   }
 
   createNodes(nodeCount, infectedPercentage) {
@@ -50,7 +53,7 @@ class SimulationLogic {
       while (source === target) target = d3r.randomInt(0, nodeCount)();
       
       const value = this.nodes[source].infected || this.nodes[target].infected ? 3 : 1;
-      const type = d3r.randomInt(0, 4)();
+      const type = d3r.randomInt(0, this.config.connectionTypes.length)();
       this.links.push({ source, target, value, type });
     }
     this.deleteUnlinkedNodes();
@@ -139,12 +142,15 @@ class SimulationLogic {
 }
 
 class SimulationGraphics {
-  constructor(simulationLogic) {
+  constructor(simulationLogic, config) {
     this.simulationLogic = simulationLogic;
     this.width = 800;
     this.height = 500;
-    this.nodeColor = ["gray", "red"];
-    this.linkColor = ["green", "purple", "blue", "gray"];
+
+    this.config = config;
+
+    this.nodeColor = [this.config.nodeColors.healthy, this.config.nodeColors.infected];
+    this.linkColor = this.config.connectionTypes.map(type => type.color);
   }
 
   drawSimulation(nodeCount, infectedPercentage) {
@@ -276,25 +282,142 @@ class SimulationGraphics {
     if (newInfections === -1) return;
     else if (newInfections > 0) this.simulation.restart();
   }
+
+  generateHTML(config) {
+    document.body.innerHTML = `
+      <div id="text">
+        <h1>Interactive COVID-19 Simulation</h1>
+        <p>
+          This simulation is not meant to be a realistic representation of the spread of COVID-19,
+          but a simplified model meant to encourage critical thinking. Feel free to experiment with
+          the parameters and see how they affect the spread of the virus.
+        </p>
+
+        <h3>Quick guide</h3>
+        <p>
+          vygeneruj barvičky
+        </p>
+        <p>
+          Node count - number of people in the simulation. If the slider is set to 0, a random
+          number of nodes will be generated.<br>
+          Infected percentage - how many people are infected at the start of the simulation.<br>
+          Virus aggressiveness - base of how likely the virus is to spread from one person to another.<br>
+          Restrictions - different measures that affect the spread of the virus. Hover over them to get
+          a basic idea of their effect.<br>
+          Scenarios - predefined sets of restrictions and virus aggressivity that might be interesting to
+          compare.<br>
+          Start/Stop - start and stop the simulation.<br>
+        </p>
+      </div>
+
+      <div id="parameters">
+        <div id="sliders">
+          <li>
+            <label for="nodeCount">Node count:</label>
+            <input type="range" min="${config.nodeCount.min}" max="${config.nodeCount.max}" value="0" class="slider" id="nodeCount">
+          </li>
+          <li>
+            <label for="infectedPercentage">Infected percentage:</label>
+            <input type="range" min="${config.infectedPercentage.min}" max="${config.infectedPercentage.max}" value="${config.infectedPercentage.default}" class="slider" id="infectedPercentage">
+          </li>
+        </div>
+
+        <div id="modifiers">
+          <label for="spread">Virus aggressiveness:</label>
+          <div>
+            ${this.generateSpreadRateOptions(config.spreadRates)}
+          </div>
+        </div>
+
+        <div id="restrictions">
+          <label>Restrictions:</label>
+          <div id="restrictionOptions">
+            ${this.generateRestrictionOptions(config.restrictions)}
+          </div>
+        </div>
+
+        <div id="scenarios">
+          <label>Scenario:</label>
+          <select id="scenarioMenu" name="scenarioMenu">
+            ${this.generateScenarioOptions(config.scenarios)}
+          </select>
+        </div>
+      </div>
+
+      <div id="controls">
+        <button id="startButton">Start</button>
+        <button disabled id="stopButton">Stop</button>
+      </div>
+    `;
+  }
+
+  generateSpreadRateOptions(spreadRates) {
+    return spreadRates.map((rate, index) => `
+    <li><input type="radio" name="spread" value="${rate.value}" id="${rate.id}"${index === 1 ? " checked" : ""}> ${rate.label}</li>
+    `).join('\n');
+  }
+
+  generateRestrictionOptions(restrictions) {
+    const midpoint = Math.ceil(restrictions.length / 2);
+    const firstHalf = restrictions.slice(0, midpoint);
+    const secondHalf = restrictions.slice(midpoint);
+
+    return `
+      <div>
+        ${this.generateRestrictionsColumn(firstHalf)}
+      </div>
+      <div>
+        ${this.generateRestrictionsColumn(secondHalf)}
+      </div>
+    `;
+  }
+
+  generateRestrictionsColumn(restrictions) {
+    return restrictions.map(restriction => {
+      const dataAttributes = Object.entries(restriction.multipliers)
+        .map(([key, value]) => `data-${key}="${value}"`)
+        .join(" ");
+
+      return `
+      <input type="checkbox" id="${restriction.id}" name="${restriction.id}" value="${restriction.id}" ${dataAttributes}>
+      <label for="${restriction.id}" data-tooltip="${restriction.tooltip}">
+        ${restriction.label}
+      </label>
+      `;
+    }).join('\n');
+  }
+
+  generateScenarioOptions(scenarios) {
+    return scenarios.map((scenario, index) => `
+    <option value="${index}">${scenario.label}</option>
+    `).join('\n');
+  }
 }
 
 class SimulationController {
-  constructor() {
+  constructor(config) {
+    this.config = config;
+
+    this.spreadRate = 1;
+    this.probabilities = config.connectionTypes.map(type => type.baseProbability);
+    this.modifiedProbabilities = [...this.probabilities];
+
+    this.simulation = new SimulationLogic(config);
+    this.simulationGraphics = new SimulationGraphics(this.simulation, config);
+
+    this.simulationGraphics.generateHTML(config);
+
+    this.initializeElements();
+    this.initializeEventListeners();
+    this.createInitialSimulation();
+  }
+
+  initializeElements() {
     this.nodeSlider = document.getElementById("nodeCount");
     this.infectedSlider = document.getElementById("infectedPercentage");
     this.startButton = document.getElementById("startButton");
     this.stopButton = document.getElementById("stopButton");
     this.scenarioMenu = document.getElementById("scenarioMenu");
-
-    this.spreadRate = 1;
-    this.probabilities = [0.1, 0.05, 0.05, 0.01];
-    this.modifiedProbabilities = [];
-
-    this.simulation = new SimulationLogic(this.probabilities, this.spreadRate);
-    this.simulationGraphics = new SimulationGraphics(this.simulation);
-
-    this.initializeEventListeners();
-    this.createInitialSimulation();
   }
 
   initializeEventListeners() {
@@ -358,14 +481,19 @@ class SimulationController {
 
   modifyProbabilities() {
     let inputs = document.getElementById("restrictions").getElementsByTagName("input");
-    this.modifiedProbabilities = this.probabilities.map((i) => i);
+    this.modifiedProbabilities = [...this.probabilities];
   
     for (let i = 0; i < inputs.length; i++) {
       if (inputs[i].checked) {
-        this.modifiedProbabilities[0] *= inputs[i].dataset.family ?? 1;
-        this.modifiedProbabilities[1] *= inputs[i].dataset.friends ?? 1;
-        this.modifiedProbabilities[2] *= inputs[i].dataset.workSchool ?? 1;
-        this.modifiedProbabilities[3] *= inputs[i].dataset.strangers ?? 1;
+        const restrictionId = inputs[i].id;
+        const restriction = this.config.restrictions.find(r => r.id === restrictionId);
+
+        this.config.connectionTypes.forEach((type, index) => {
+          const typeId = type.id;
+          if (restriction.multipliers[typeId]) {
+            this.modifiedProbabilities[index] *= restriction.multipliers[typeId];
+          }
+        });
       }
     }
 
@@ -431,40 +559,21 @@ class SimulationController {
   }
 
   updateScenario() {
-    let scenario = document.getElementById("scenarioMenu").value;
-    switch (scenario) {
-      case "0":
-        return;
-      case "1":
-        this.changeCheckedSpread("spreadLow");
-        this.unselectAllRestrictions();
-        break;
-      case "2":
-        this.changeCheckedSpread("spreadLow");
-        this.selectAllRestrictions();
-        break;
-      case "3":
-        this.changeCheckedSpread("spreadMedium");
-        this.unselectAllRestrictions();
-        break;
-      case "4":
-        this.changeCheckedSpread("spreadMedium");
-        this.selectSomeRestrictions(["respirators", "quarantine", "distancing"])
-        break;
-      case "5":
-        this.changeCheckedSpread("spreadMedium");
-        this.selectAllRestrictions();
-        break;
-      case "6":
-        this.changeCheckedSpread("spreadHigh");
-        this.unselectAllRestrictions();
-        break;
-      case "7":
-        this.changeCheckedSpread("spreadHigh");
-        this.selectAllRestrictions();
-        break;
+    const scenarioIndex = parseInt(this.scenarioMenu.value);
+    const scenario = this.config.scenarios[scenarioIndex];
+
+    if (scenario.spreadRate) {
+      this.changeCheckedSpread(scenario.spreadRate);
+    }
+
+    if (scenario.restrictions.length === 0) {
+      this.unselectAllRestrictions();
+    } else if (scenario.restrictions.length === this.config.restrictions.length) {
+      this.selectAllRestrictions();
+    } else { 
+      this.selectSomeRestrictions(scenario.restrictions);
     }
   }
 }
 
-let simulationController = new SimulationController();
+export { SimulationController };

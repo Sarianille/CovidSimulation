@@ -2,122 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8"/>
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="simulationStyle.css"/>
+    <link rel="stylesheet" href="generatorStyle.css"/>
   </head>
+  <script src="https://d3js.org/d3.v7.js"></script>
   <body>
-      <script src="https://d3js.org/d3.v7.js"></script>
-
-      <div id="text">
-        <h1>Interactive COVID-19 Simulation</h1>
-        <p>
-          This simulation is not meant to be a realistic representation of the spread of COVID-19,
-          but a simplified model meant to encourage critical thinking. Feel free to experiment with
-          the parameters and see how they affect the spread of the virus.
-        </p>
-
-        <h3>Quick guide</h6>
-        <p>
-          Gray nodes are healthy.<br>
-          Red nodes are infected.<br>
-          Green connections are family.<br>
-          Purple connections are friends.<br>
-          Blue connections are people from the same school/workplace.<br>
-          Gray connections are strangers.<br>
-
-        </p>
-        <p>
-          Node count - number of people in the simulation. If the slider is set to 0, a random
-          number of nodes will be generated.<br>
-          Infected percentage - how many people are infected at the start of the simulation.<br>
-          Virus aggressiveness - base of how likely the virus is to spread from one person to another.<br>
-          Restrictions - different measures that affect the spread of the virus. Hover over them to get
-          a basic idea of their effect.<br>
-          Scenarios - predefined sets of restrictions and virus aggressivity that might be interesting to
-          compare.<br>
-          Start/Stop - start and stop the simulation.<br>
-        </p>
-      </div>
-
-      <div id="parameters">
-        <div id="slidecontainer">
-          <li>
-            <label for="nodeCount">Node count:</label>
-            <input type="range" min="0" max="100" value="0" class="slider" id="nodeCount">
-          </li>
-          <li>
-            <label for="infectedPercentage">Infected percentage:</label>
-            <input type="range" min="0" max="100" value="10" class="slider" id="infectedPercentage">
-          </li>
-        </div>
-
-        <div id="modifiers">
-          <label for="spread">Virus aggressiveness:</label>
-          <div>
-            <li><input type="radio" name="spread" value="0.5" id="spreadLow"> Low</li>
-            <li><input type="radio" name="spread" value="1" id="spreadMedium" checked> Normal</li>
-            <li><input type="radio" name="spread" value="2" id="spreadHigh"> High</li>
-          </div>
-        </div>
-
-        <div id="restrictions">
-          Restrictions:
-          <br>
-          <div id="restrictionsOptions">
-            <div>
-              <input type="checkbox" id="respirators" name="respirators" value="respirators" data-work-school="0.8" data-strangers="0.5" data-friends="0.95">
-              <label for="respirators" data-tooltip="Friends - majority won't follow this restriction.&#xa;School/work - helps a bit, people still sit in the same enclosed spaces and are more prone to wear respirators incorrectly at times.&#xa;Strangers - more protected around infected people.">
-                Respirator usage in public spaces
-              </label>
-              <br>
-              <input type="checkbox" id="testing" name="testing" value="testing" data-work-school="0.5">
-              <label for="testing" data-tooltip="School/work - most cases get caught in time.">
-                Antigen testing in schools and workplaces 2x&nbsp;per week
-              </label>
-              <br>
-              <input type="checkbox" id="quarantine" name="quarantine" value="quarantine" data-family="0.95" data-friends="0.3" data-work-school="0.3" data-strangers="0.1">
-              <label for="quarantine" data-tooltip="Family - minimal effect due to sharing the same living space.&#xa;Friends - mostly eliminated, but could've spread before the test.&#xa;School/work - mostly eliminated, but could've spread before the test.&#xa;Strangers - very unlikely to meet an infectious person.">
-                2 weeks of quarantine after a positive test
-              </label>
-            </div>
-            <div>
-              <input type="checkbox" id="distancing" name="distancing" value="distancing" data-strangers="0.5" data-friends="0.95">
-              <label for="distancing" data-tooltip="Friends - majority won't follow this restriction.&#xa;Strangers - less interactions with people and safer distances.">
-                Social distancing in public spaces
-              </label>
-              <br>
-              <input type="checkbox" id="homeoffice" name="homeoffice" value="homeoffice" data-family="1.3" data-work-school="0.1" data-strangers="0.3">
-              <label for="homeoffice" data-tooltip="Family - more time spent around them.&#xa;School/work - practically no in-person interactions.&#xa;Strangers - people travel less.">
-                Home office and online school
-              </label>
-              <br>
-              <input type="checkbox" id="hobbies" name="hobbies" value="hobbies" data-friends="0.7" data-strangers="0.5">
-              <label for="hobbies" data-tooltip="Friends - less activities to do outside, won't stop them from hanging out.&#xa;Strangers - practically no interactions in movies, clubs, etc.">
-                Restrictions on hobbies and sports
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div id="scenarios">
-          <label>Scenario:</label>
-          <select id="scenarioMenu" name="scenarioMenu">
-            <option value="0">None</option>
-            <option value="1">Non-aggressive virus, no restrictions</option>
-            <option value="2">Non-aggressive virus, all restrictions</option>
-            <option value="3">Normal virus, no restrictions</option>
-            <option value="4">Normal virus, moderate restrictions</option>
-            <option value="5">Normal virus, all restrictions</option>
-            <option value="6">Very aggressive virus, no restrictions</option>
-            <option value="7">Very aggresive virus, all restrictions</option>
-          </select>
-        </div>
-      </div>
-
-      <div id="simulationcontrols">
-        <button id="startButton">Start</button>
-        <button disabled id="stopButton">Stop</button>
-      </div>
-
-      <script type="module" src="/simulation.js"></script>
   </body>
+  <script type="module">
+    import { SimulationController } from './simulation.js';
+    import { defaultConfig } from './defaultConfig.js';
+    import { ConfigGenerator } from './configGenerator.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const setup = new ConfigGenerator(defaultConfig, SimulationController);
+    });
+  </script>
 </html>

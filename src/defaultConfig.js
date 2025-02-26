@@ -1,4 +1,4 @@
-const defaultConfig = {
+export const defaultConfig = {
     nodeCount: {
       min: 0,
       max: 100

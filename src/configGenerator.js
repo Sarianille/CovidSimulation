@@ -1,6 +1,7 @@
-class ConfigGenerator {
-  constructor(defaultConfig) {
+export class ConfigGenerator {
+  constructor(defaultConfig, SimulationController) {
     this.state = defaultConfig;
+    this.SimulationController = SimulationController;
     
     this.setupPage = null;
     this.initializeSetupPage();
@@ -163,10 +164,7 @@ class ConfigGenerator {
     document.getElementById('createSimulation').addEventListener('click', () => {
       this.updateState();
       document.body.innerHTML = '';
-      // new SimulationController(this.state);
-
-      // For testing purposes:
-      console.log(this.state);
+      new this.SimulationController(this.state);
     });
   }
 
