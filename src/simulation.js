@@ -285,14 +285,14 @@ class SimulationGraphics {
 
   generateHTML(config) {
     document.body.innerHTML = `
-      <div id="text">
+      <div id="sim-text">
         <h1>Interactive COVID-19 Simulation</h1>
         <p>
           This simulation is not meant to be a realistic representation of the spread of COVID-19,
           but a simplified model meant to encourage critical thinking. Feel free to experiment with
           the parameters and see how they affect the spread of the virus.
         </p>
-
+  
         <h3>Quick guide</h3>
         <p>
           vygeneruj barvičky
@@ -309,51 +309,54 @@ class SimulationGraphics {
           Start/Stop - start and stop the simulation.<br>
         </p>
       </div>
-
-      <div id="parameters">
-        <div id="sliders">
+  
+      <div id="sim-parameters">
+        <div id="sim-sliders">
           <li>
-            <label for="nodeCount">Node count:</label>
-            <input type="range" min="${config.nodeCount.min}" max="${config.nodeCount.max}" value="0" class="slider" id="nodeCount">
+            <label for="sim-node-count">Node count:</label>
+            <input type="range" min="${config.nodeCount.min}" max="${config.nodeCount.max}" value="0" class="sim-slider" id="sim-node-count">
           </li>
           <li>
-            <label for="infectedPercentage">Infected percentage:</label>
-            <input type="range" min="${config.infectedPercentage.min}" max="${config.infectedPercentage.max}" value="${config.infectedPercentage.default}" class="slider" id="infectedPercentage">
+            <label for="sim-infected-percentage">Infected percentage:</label>
+            <input type="range" min="${config.infectedPercentage.min}" max="${config.infectedPercentage.max}" value="${config.infectedPercentage.default}" class="sim-slider" id="sim-infected-percentage">
           </li>
         </div>
-
-        <div id="modifiers">
-          <label for="spread">Virus aggressiveness:</label>
+  
+        <div id="sim-modifiers">
+          <label for="sim-spread">Virus aggressiveness:</label>
           <div>
             ${this.generateSpreadRateOptions(config.spreadRates)}
           </div>
         </div>
-
-        <div id="restrictions">
+  
+        <div id="sim-restrictions">
           <label>Restrictions:</label>
-          <div id="restrictionOptions">
+          <div id="sim-restriction-options">
             ${this.generateRestrictionOptions(config.restrictions)}
           </div>
         </div>
-
-        <div id="scenarios">
+  
+        <div id="sim-scenarios">
           <label>Scenario:</label>
-          <select id="scenarioMenu" name="scenarioMenu">
+          <select id="sim-scenario-menu" name="sim-scenario-menu">
             ${this.generateScenarioOptions(config.scenarios)}
           </select>
         </div>
       </div>
-
-      <div id="controls">
-        <button id="startButton">Start</button>
-        <button disabled id="stopButton">Stop</button>
+  
+      <div id="sim-controls">
+        <button id="sim-start-button">Start</button>
+        <button disabled id="sim-stop-button">Stop</button>
       </div>
     `;
   }
 
   generateSpreadRateOptions(spreadRates) {
     return spreadRates.map((rate, index) => `
-    <li><input type="radio" name="spread" value="${rate.value}" id="${rate.id}"${index === 1 ? " checked" : ""}> ${rate.label}</li>
+    <li class="sim-spread-item">
+      <input type="radio" name="sim-spread" value="${rate.value}" id="sim-${rate.id}"${index === 1 ? " checked" : ""}>
+      <label for="sim-${rate.id}">${rate.label}</label>
+    </li>
     `).join('\n');
   }
 
@@ -377,12 +380,14 @@ class SimulationGraphics {
       const dataAttributes = Object.entries(restriction.multipliers)
         .map(([key, value]) => `data-${key}="${value}"`)
         .join(" ");
-
+  
       return `
-      <input type="checkbox" id="${restriction.id}" name="${restriction.id}" value="${restriction.id}" ${dataAttributes}>
-      <label for="${restriction.id}" data-tooltip="${restriction.tooltip}">
-        ${restriction.label}
-      </label>
+      <div class="sim-restriction-item">
+        <input type="checkbox" id="sim-${restriction.id}" name="sim-${restriction.id}" value="${restriction.id}" ${dataAttributes}>
+        <label for="sim-${restriction.id}" data-sim-tooltip="${restriction.tooltip}">
+          ${restriction.label}
+        </label>
+      </div>
       `;
     }).join('\n');
   }
@@ -413,15 +418,16 @@ class SimulationController {
   }
 
   initializeElements() {
-    this.nodeSlider = document.getElementById("nodeCount");
-    this.infectedSlider = document.getElementById("infectedPercentage");
-    this.startButton = document.getElementById("startButton");
-    this.stopButton = document.getElementById("stopButton");
-    this.scenarioMenu = document.getElementById("scenarioMenu");
+    this.nodeSlider = document.getElementById("sim-node-count");
+    this.infectedSlider = document.getElementById("sim-infected-percentage");
+    this.startButton = document.getElementById("sim-start-button");
+    this.stopButton = document.getElementById("sim-stop-button");
+    this.scenarioMenu = document.getElementById("sim-scenario-menu");
   }
 
   initializeEventListeners() {
     const sliderCallback = () => {
+      console.log(this.nodeSlider.value)
       this.createInitialSimulation();
     };
 
@@ -470,7 +476,7 @@ class SimulationController {
   }
 
   updateSpreadRate() {
-    const elements = document.getElementsByName("spread");
+    const elements = document.getElementsByName("sim-spread");
     for (let i = 0; i < elements.length; i++) {
       if (elements[i].checked) {
         this.spreadRate = elements[i].value;
@@ -480,14 +486,14 @@ class SimulationController {
   }
 
   modifyProbabilities() {
-    let inputs = document.getElementById("restrictions").getElementsByTagName("input");
+    let inputs = document.getElementById("sim-restrictions").getElementsByTagName("input");
     this.modifiedProbabilities = [...this.probabilities];
   
     for (let i = 0; i < inputs.length; i++) {
       if (inputs[i].checked) {
-        const restrictionId = inputs[i].id;
+        const restrictionId = inputs[i].value; // Use value instead of id since the id format has sim- prefix
         const restriction = this.config.restrictions.find(r => r.id === restrictionId);
-
+  
         this.config.connectionTypes.forEach((type, index) => {
           const typeId = type.id;
           if (restriction.multipliers[typeId]) {
@@ -496,20 +502,20 @@ class SimulationController {
         });
       }
     }
-
+  
     this.simulation.probabilities = this.modifiedProbabilities;
   }
 
   setInputState(enabled) {
     this.startButton.disabled = enabled;
     this.stopButton.disabled = !enabled;
-
-    let spreadInputs = document.getElementsByName("spread");
+  
+    let spreadInputs = document.getElementsByName("sim-spread");
     for (let i = 0; i < spreadInputs.length; i++) {
       spreadInputs[i].disabled = enabled;
     }
-
-    let restrictionsInputs = document.getElementById("restrictions").getElementsByTagName("input");
+  
+    let restrictionsInputs = document.getElementById("sim-restrictions").getElementsByTagName("input");
     for (let i = 0; i < restrictionsInputs.length; i++) {
       restrictionsInputs[i].disabled = enabled;
     }
@@ -524,16 +530,16 @@ class SimulationController {
   }
 
   changeCheckedSpread(id) {
-    let elements = document.getElementsByName("spread");
+    let elements = document.getElementsByName("sim-spread");
     for (let i = 0; i < elements.length; i++) {
       elements[i].checked = false;
     }
   
-    document.getElementById(id).checked = true;
+    document.getElementById("sim-" + id).checked = true;
   }
 
   changeRestrictionsSelection(selected) {
-    let elements = document.getElementById("restrictions").getElementsByTagName("input");
+    let elements = document.getElementById("sim-restrictions").getElementsByTagName("input");
     for (let i = 0; i < elements.length; i++) {
       elements[i].checked = selected;
     }
@@ -550,9 +556,9 @@ class SimulationController {
   selectSomeRestrictions(checkedRestrictions) {
     this.unselectAllRestrictions();
   
-    let elements = document.getElementById("restrictions").getElementsByTagName("input");
+    let elements = document.getElementById("sim-restrictions").getElementsByTagName("input");
     for (let i = 0; i < elements.length; i++) {
-      if (checkedRestrictions.includes(elements[i].id)) {
+      if (checkedRestrictions.includes(elements[i].value)) {
         elements[i].checked = true;
       }
     }
