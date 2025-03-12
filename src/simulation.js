@@ -46,6 +46,8 @@ class SimulationLogic {
   }
 
   createLinks(nodeCount) {
+    if (nodeCount < 2) return;
+
     this.links = [];
     for (let i = 0; i < nodeCount * 2; i++) {
       const source = d3r.randomInt(0, nodeCount)();
@@ -427,7 +429,6 @@ class SimulationController {
 
   initializeEventListeners() {
     const sliderCallback = () => {
-      console.log(this.nodeSlider.value)
       this.createInitialSimulation();
     };
 
