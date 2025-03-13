@@ -510,6 +510,11 @@ class SimulationController {
   setInputState(enabled) {
     this.startButton.disabled = enabled;
     this.stopButton.disabled = !enabled;
+
+    this.nodeSlider.disabled = enabled;
+    this.infectedSlider.disabled = enabled;
+
+    this.scenarioMenu.disabled = enabled;
   
     let spreadInputs = document.getElementsByName("sim-spread");
     for (let i = 0; i < spreadInputs.length; i++) {

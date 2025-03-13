@@ -85,6 +85,22 @@ svg {
   cursor: pointer;
 }
 
+.sim-slider:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #e0e0e0;
+}
+
+.sim-slider:disabled::-webkit-slider-thumb {
+  background: #b0b0b0;
+  cursor: not-allowed;
+}
+
+.sim-slider:disabled::-moz-range-thumb {
+  background: #b0b0b0;
+  cursor: not-allowed;
+}
+
 #sim-modifiers {
   grid-area: modifiers;
   padding: 15px;
