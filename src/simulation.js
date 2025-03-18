@@ -286,7 +286,7 @@ class SimulationGraphics {
   }
 
   generateHTML(config) {
-    document.body.innerHTML = `
+    document.body.innerHTML += `
       <div id="sim-text">
         <h1>Interactive COVID-19 Simulation</h1>
         <p>

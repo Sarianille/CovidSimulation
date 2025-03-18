@@ -164,8 +164,42 @@ export class ConfigGenerator {
     document.getElementById('createSimulation').addEventListener('click', () => {
       this.updateState();
       document.body.innerHTML = '';
+
+      this.addMetaButtons();
       new this.SimulationController(this.state);
+      this.addMetaListeners();
     });
+  }
+
+  addMetaListeners() {
+    document.getElementById('back-button').addEventListener('click', () => {
+      this.initializeSetupPage();
+      this.addEventListeners();
+    });
+
+    document.getElementById('copy-button').addEventListener('click', () => {
+      const embedCode = `
+      <link rel="stylesheet" href="https://sarianille.github.io/CovidSimulation/bundle/simulation.css">
+      <script type="module">
+        import { SimulationController } from 'https://sarianille.github.io/CovidSimulation/bundle/simulation.js';
+
+        const config = ${JSON.stringify(this.state, null, 2)};
+        new SimulationController(config);
+      </script>
+      `
+
+      navigator.clipboard.writeText(embedCode).then(() => {
+        alert('Embed code copied to clipboard!');
+      });
+    });
+  }
+
+  addMetaButtons() {
+    document.body.innerHTML += `
+      <div class="meta-buttons">
+        <button type="button" id="back-button">Back to Configuration</button>
+        <button type="button" id="copy-button">Copy Simulation</button>
+      </div>`;
   }
 
   refreshDynamicSections() {
