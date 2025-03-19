@@ -24,6 +24,16 @@ export class ConfigGenerator {
       <h1>Simulation Configuration</h1>
       
       <div class="section">
+        <h2>Display Options</h2>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="showHeader" ${this.state.showHeader ? 'checked' : ''}>
+            Show heading and introduction text
+          </label>
+        </div>
+      </div>
+
+      <div class="section">
         <h2>Node Configuration</h2>
         ${this.renderNodeConfig()}
       </div>
@@ -70,6 +80,7 @@ export class ConfigGenerator {
   }
 
   updateState() {
+    this.state.showHeader = document.getElementById('showHeader').checked;
     this.state.nodeCount = {
       min: parseInt(document.getElementById('nodeCountMin').value),
       max: parseInt(document.getElementById('nodeCountMax').value)

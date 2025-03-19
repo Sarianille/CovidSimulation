@@ -290,12 +290,13 @@ class SimulationGraphics {
 
     document.body.innerHTML += `
       <div id="sim-text">
-        <h1>Interactive COVID-19 Simulation</h1>
+      ${config.showHeader ? 
+        `<h1>Interactive COVID-19 Simulation</h1>
         <p>
           This simulation is not meant to be a realistic representation of the spread of COVID-19,
           but a simplified model meant to encourage critical thinking. Feel free to experiment with
           the parameters and see how they affect the spread of the virus.
-        </p>
+        </p>` : ``}
   
         <h3>Quick guide</h3>
         <div class="sim-legend">

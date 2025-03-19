@@ -1,4 +1,5 @@
 export const defaultConfig = {
+    showHeader: true,
     nodeCount: {
       min: 0,
       max: 100
