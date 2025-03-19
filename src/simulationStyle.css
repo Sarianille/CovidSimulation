@@ -192,6 +192,7 @@ svg {
 #sim-scenarios label {
   font-weight: 500;
   margin-right: 15px;
+  min-width: fit-content;
 }
 
 #sim-scenario-menu {
@@ -356,4 +357,16 @@ svg {
 .sim-legend-thickness-label {
   font-size: 12px;
   color: #7f8c8d;
+}
+
+.info-icon {
+  color: #0066cc;
+  cursor: help;
+  font-size: 16px;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.info-icon:hover {
+  color: #004080;
 }

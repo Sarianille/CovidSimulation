@@ -286,6 +286,8 @@ class SimulationGraphics {
   }
 
   generateHTML(config) {
+    const infoTexts = this.getInfoTexts();
+
     document.body.innerHTML += `
       <div id="sim-text">
         <h1>Interactive COVID-19 Simulation</h1>
@@ -299,47 +301,36 @@ class SimulationGraphics {
         <div class="sim-legend">
           ${this.generateLegend(config)}
         </div>
-        <p>
-          Node count - number of people in the simulation. If the slider is set to 0, a random
-          number of nodes will be generated.<br>
-          Infected percentage - how many people are infected at the start of the simulation.<br>
-          Virus aggressiveness - base of how likely the virus is to spread from one person to another.<br>
-          Restrictions - different measures that affect the spread of the virus. Hover over them to get
-          a basic idea of their effect.<br>
-          Scenarios - predefined sets of restrictions and virus aggressivity that might be interesting to
-          compare.<br>
-          Start/Stop - start and stop the simulation.<br>
-        </p>
       </div>
   
       <div id="sim-parameters">
         <div id="sim-sliders">
           <li>
-            <label for="sim-node-count">Node count:</label>
+            <label for="sim-node-count">${this.createInfoIcon(infoTexts.nodeCount)} Node count:</label>
             <input type="range" min="${config.nodeCount.min}" max="${config.nodeCount.max}" value="0" class="sim-slider" id="sim-node-count">
           </li>
           <li>
-            <label for="sim-infected-percentage">Infected percentage:</label>
+            <label for="sim-infected-percentage">${this.createInfoIcon(infoTexts.infectedPercentage)} Infected percentage:</label>
             <input type="range" min="${config.infectedPercentage.min}" max="${config.infectedPercentage.max}" value="${config.infectedPercentage.default}" class="sim-slider" id="sim-infected-percentage">
           </li>
         </div>
   
         <div id="sim-modifiers">
-          <label for="sim-spread">Virus aggressiveness:</label>
+          <label for="sim-spread">${this.createInfoIcon(infoTexts.virusAggressiveness)} Virus aggressiveness:</label>
           <div>
             ${this.generateSpreadRateOptions(config.spreadRates)}
           </div>
         </div>
   
         <div id="sim-restrictions">
-          <label>Restrictions:</label>
+          <label>${this.createInfoIcon(infoTexts.restrictions)} Restrictions:</label>
           <div id="sim-restriction-options">
             ${this.generateRestrictionOptions(config.restrictions)}
           </div>
         </div>
   
         <div id="sim-scenarios">
-          <label>Scenario:</label>
+          <label>${this.createInfoIcon(infoTexts.scenarios)} Scenario:</label>
           <select id="sim-scenario-menu" name="sim-scenario-menu">
             ${this.generateScenarioOptions(config.scenarios)}
           </select>
@@ -445,6 +436,20 @@ class SimulationGraphics {
     `;
 
     return nodesHTML + linksHTML + noteHTML;
+  }
+
+  createInfoIcon(tooltipText) {
+    return `<span class="info-icon" data-sim-tooltip="${tooltipText}">ⓘ</span>`;
+  }
+
+  getInfoTexts() {
+    return {
+      nodeCount: "Number of people in the simulation. If the slider is set to 0, a random number of nodes will be generated.",
+      infectedPercentage: "How many people are infected at the start of the simulation.",
+      virusAggressiveness: "Base of how likely the virus is to spread from one person to another.",
+      restrictions: "Different measures that affect the spread of the virus. Hover over them to get a basic idea of their effect.",
+      scenarios: "Predefined sets of restrictions and virus aggressivity that might be interesting to compare.",
+    };
   }
 }
 
