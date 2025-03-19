@@ -289,3 +289,71 @@ svg {
   border-color: #34495e transparent transparent transparent;
   z-index: 100;
 }
+
+.sim-legend {
+  margin: 15px 0 25px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  background-color: #f0f6fc;
+  font-size: 14px;
+  max-width: 600px;
+}
+
+.sim-legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.sim-legend-item {
+  display: flex;
+  align-items: center;
+  margin-right: 15px;
+  min-width: 100px;
+}
+
+.sim-legend-node {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 8px;
+  border: 1px solid #333;
+}
+
+.sim-legend-line {
+  width: 30px;
+  height: 3px;
+  margin-right: 8px;
+}
+
+.sim-legend-label {
+  font-size: 14px;
+}
+
+.sim-legend-note {
+  margin-top: 15px;
+  font-style: italic;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.sim-legend-thickness {
+  display: flex;
+  margin-top: 10px;
+  gap: 30px;
+}
+
+.sim-legend-thickness-item {
+  display: flex;
+  align-items: center;
+}
+
+.sim-legend-thickness-line {
+  width: 30px;
+  margin-right: 8px;
+}
+
+.sim-legend-thickness-label {
+  font-size: 12px;
+  color: #7f8c8d;
+}

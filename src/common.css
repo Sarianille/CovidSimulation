@@ -26,6 +26,13 @@ body {
     margin: 1.5rem 0 1rem;
   }
 
+  h4 {
+    color: #34495e;
+    font-size: 1rem;
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.3rem;
+  }
+
   input[type="text"],
 input[type="number"],
 textarea,

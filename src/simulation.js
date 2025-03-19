@@ -296,9 +296,9 @@ class SimulationGraphics {
         </p>
   
         <h3>Quick guide</h3>
-        <p>
-          vygeneruj barvičky
-        </p>
+        <div class="sim-legend">
+          ${this.generateLegend(config)}
+        </div>
         <p>
           Node count - number of people in the simulation. If the slider is set to 0, a random
           number of nodes will be generated.<br>
@@ -398,6 +398,53 @@ class SimulationGraphics {
     return scenarios.map((scenario, index) => `
     <option value="${index}">${scenario.label}</option>
     `).join('\n');
+  }
+
+  generateLegend(config) {
+    const nodesHTML = `
+      <h4>Node Colors:</h4>
+      <div class="sim-legend-items">
+        <div class="sim-legend-item">
+          <div class="sim-legend-node" style="background-color: ${config.nodeColors.healthy};"></div>
+          <div class="sim-legend-label">Healthy</div>
+        </div>
+        <div class="sim-legend-item">
+          <div class="sim-legend-node" style="background-color: ${config.nodeColors.infected};"></div>
+          <div class="sim-legend-label">Infected</div>
+        </div>
+      </div>
+    `;
+
+    const linksHTML = `
+      <br>
+      <h4>Connection Types:</h4>
+      <div class="sim-legend-items">
+        ${config.connectionTypes.map(type => `
+        <div class="sim-legend-item">
+          <div class="sim-legend-line" style="background-color: ${type.color};"></div>
+          <div class="sim-legend-label">${type.label}</div>
+        </div>
+        `).join('')}
+      </div>
+    `;
+
+    const noteHTML = `
+      <div class="sim-legend-note">
+        <p>Note: Thicker lines indicate that at least one connected node is infected.</p>
+        <div class="sim-legend-thickness">
+            <div class="sim-legend-thickness-item">
+              <div class="sim-legend-thickness-line" style="background-color: #0000ff; height: 1px;"></div>
+              <div class="sim-legend-thickness-label">Regular connection</div>
+            </div>
+            <div class="sim-legend-thickness-item">
+              <div class="sim-legend-thickness-line" style="background-color: #0000ff; height: 3px;"></div>
+              <div class="sim-legend-thickness-label">Infected connection</div>
+            </div>
+        </div>
+      </div>
+    `;
+
+    return nodesHTML + linksHTML + noteHTML;
   }
 }
 
