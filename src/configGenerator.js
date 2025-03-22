@@ -177,7 +177,12 @@ export class ConfigGenerator {
       document.body.innerHTML = '';
 
       this.addMetaButtons();
-      new this.SimulationController(this.state);
+
+      document.body.innerHTML += `
+        <div class="simulation-container" id="sim-example"></div>
+      `;
+
+      new this.SimulationController(this.state, "sim-example");
       this.addMetaListeners();
     });
   }
@@ -189,13 +194,15 @@ export class ConfigGenerator {
     });
 
     document.getElementById('copy-button').addEventListener('click', () => {
+      const simID = "sim-" + crypto.randomUUID();
       const embedCode = `
+      <div id="${simID}"></div>
       <link rel="stylesheet" href="https://sarianille.github.io/CovidSimulation/bundle/simulation.css">
       <script type="module">
         import { SimulationController } from 'https://sarianille.github.io/CovidSimulation/bundle/simulation.js';
 
         const config = ${JSON.stringify(this.state, null, 2)};
-        new SimulationController(config);
+        new SimulationController(config, ${simID});
       </script>
       `
 

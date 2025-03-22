@@ -144,12 +144,13 @@ class SimulationLogic {
 }
 
 class SimulationGraphics {
-  constructor(simulationLogic, config) {
+  constructor(simulationLogic, config, containerElement) {
     this.simulationLogic = simulationLogic;
     this.width = 800;
     this.height = 500;
 
     this.config = config;
+    this.containerElement = containerElement
 
     this.nodeColor = [this.config.nodeColors.healthy, this.config.nodeColors.infected];
     this.linkColor = this.config.connectionTypes.map(type => type.color);
@@ -224,7 +225,7 @@ class SimulationGraphics {
     event.subject.fy = null;
   }
 
-  static drawChart(infectedAmounts) {
+  static drawChart(infectedAmounts, chartContainer) {
     const width = 800;
     const height = 300;
     const marginTop = 30;
@@ -276,6 +277,11 @@ class SimulationGraphics {
       .attr("stroke-width", 1.5)
       .attr("d", line(infectedAmounts));
 
+    while (chartContainer.firstChild) {
+      chartContainer.removeChild(chartContainer.firstChild);
+    }
+    chartContainer.appendChild(svg.node());
+
     return svg.node();
   }
 
@@ -287,9 +293,11 @@ class SimulationGraphics {
 
   generateHTML(config) {
     const infoTexts = this.getInfoTexts();
+    const containerElement = this.containerElement;
+    const simID = containerElement.id;
 
-    document.body.innerHTML += `
-      <div id="sim-text">
+    containerElement.innerHTML = `
+      <div class="sim-text">
       ${config.showHeader ? 
         `<h1>Interactive COVID-19 Simulation</h1>
         <p>
@@ -304,52 +312,57 @@ class SimulationGraphics {
         </div>
       </div>
   
-      <div id="sim-parameters">
-        <div id="sim-sliders">
+      <div class="sim-parameters">
+        <div class="sim-sliders">
           <li>
-            <label for="sim-node-count">${this.createInfoIcon(infoTexts.nodeCount)} Node count:</label>
-            <input type="range" min="${config.nodeCount.min}" max="${config.nodeCount.max}" value="0" class="sim-slider" id="sim-node-count">
+            <label>${this.createInfoIcon(infoTexts.nodeCount)} Node count:</label>
+            <input type="range" min="${config.nodeCount.min}" max="${config.nodeCount.max}" value="0" class="sim-slider node-count-slider">
           </li>
           <li>
-            <label for="sim-infected-percentage">${this.createInfoIcon(infoTexts.infectedPercentage)} Infected percentage:</label>
-            <input type="range" min="${config.infectedPercentage.min}" max="${config.infectedPercentage.max}" value="${config.infectedPercentage.default}" class="sim-slider" id="sim-infected-percentage">
+            <label>${this.createInfoIcon(infoTexts.infectedPercentage)} Infected percentage:</label>
+            <input type="range" min="${config.infectedPercentage.min}" max="${config.infectedPercentage.max}" value="${config.infectedPercentage.default}" class="sim-slider infected-percentage-slider">
           </li>
         </div>
   
-        <div id="sim-modifiers">
-          <label for="sim-spread">${this.createInfoIcon(infoTexts.virusAggressiveness)} Virus aggressiveness:</label>
+        <div class="sim-modifiers">
+          <label>${this.createInfoIcon(infoTexts.virusAggressiveness)} Virus aggressiveness:</label>
           <div>
             ${this.generateSpreadRateOptions(config.spreadRates)}
           </div>
         </div>
   
-        <div id="sim-restrictions">
+        <div class="sim-restrictions">
           <label>${this.createInfoIcon(infoTexts.restrictions)} Restrictions:</label>
-          <div id="sim-restriction-options">
+          <div class="sim-restriction-options">
             ${this.generateRestrictionOptions(config.restrictions)}
           </div>
         </div>
   
-        <div id="sim-scenarios">
+        <div class="sim-scenarios">
           <label>${this.createInfoIcon(infoTexts.scenarios)} Scenario:</label>
-          <select id="sim-scenario-menu" name="sim-scenario-menu">
+          <select class="sim-scenario-menu">
             ${this.generateScenarioOptions(config.scenarios)}
           </select>
         </div>
       </div>
   
-      <div id="sim-controls">
-        <button id="sim-start-button">Start</button>
-        <button disabled id="sim-stop-button">Stop</button>
+      <div class="sim-controls">
+        <button class="sim-start-button">Start</button>
+        <button disabled class="sim-stop-button">Stop</button>
       </div>
+
+      <div class="sim-visualization-area"></div>
+      <div class="sim-chart-area"></div>
     `;
   }
 
   generateSpreadRateOptions(spreadRates) {
     return spreadRates.map((rate, index) => `
     <li class="sim-spread-item">
-      <input type="radio" name="sim-spread" value="${rate.value}" id="sim-${rate.id}"${index === 1 ? " checked" : ""}>
-      <label for="sim-${rate.id}">${rate.label}</label>
+      <label>
+      <input type="radio" name="sim-spread-${this.containerElement.id}" data-rate-id="${rate.id}" value="${rate.value}" ${index === 1 ? " checked" : ""}>
+      ${rate.label}
+      </label>
     </li>
     `).join('\n');
   }
@@ -377,8 +390,8 @@ class SimulationGraphics {
   
       return `
       <div class="sim-restriction-item">
-        <input type="checkbox" id="sim-${restriction.id}" name="sim-${restriction.id}" value="${restriction.id}" ${dataAttributes}>
-        <label for="sim-${restriction.id}" data-sim-tooltip="${restriction.tooltip}">
+        <label data-sim-tooltip="${restriction.tooltip}">
+          <input type="checkbox" value="${restriction.id}" ${dataAttributes}>
           ${restriction.label}
         </label>
       </div>
@@ -455,15 +468,18 @@ class SimulationGraphics {
 }
 
 class SimulationController {
-  constructor(config) {
+  constructor(config, simID) {
     this.config = config;
+    this.simID = simID;
+
+    this.containerElement = document.getElementById(simID);
 
     this.spreadRate = 1;
     this.probabilities = config.connectionTypes.map(type => type.baseProbability);
     this.modifiedProbabilities = [...this.probabilities];
 
     this.simulation = new SimulationLogic(config);
-    this.simulationGraphics = new SimulationGraphics(this.simulation, config);
+    this.simulationGraphics = new SimulationGraphics(this.simulation, config, this.containerElement);
 
     this.simulationGraphics.generateHTML(config);
 
@@ -473,11 +489,13 @@ class SimulationController {
   }
 
   initializeElements() {
-    this.nodeSlider = document.getElementById("sim-node-count");
-    this.infectedSlider = document.getElementById("sim-infected-percentage");
-    this.startButton = document.getElementById("sim-start-button");
-    this.stopButton = document.getElementById("sim-stop-button");
-    this.scenarioMenu = document.getElementById("sim-scenario-menu");
+    this.nodeSlider = this.containerElement.querySelector(".node-count-slider");
+    this.infectedSlider = this.containerElement.querySelector(".infected-percentage-slider");
+    this.startButton = this.containerElement.querySelector(".sim-start-button");
+    this.stopButton = this.containerElement.querySelector(".sim-stop-button");
+    this.scenarioMenu = this.containerElement.querySelector(".sim-scenario-menu");
+    this.visualizationArea = this.containerElement.querySelector(".sim-visualization-area");
+    this.chartArea = this.containerElement.querySelector(".sim-chart-area");
   }
 
   initializeEventListeners() {
@@ -508,29 +526,28 @@ class SimulationController {
     };
   }
 
-  createInitialSimulation() {
-    d3sel.selectAll("svg").remove();
+  createInitialSimulation() {    
+    while (this.visualizationArea.firstChild) {
+      this.visualizationArea.removeChild(this.visualizationArea.firstChild);
+    }
+
     const simulation = this.simulationGraphics.drawSimulation(
       Number(this.nodeSlider.value), 
       Number(this.infectedSlider.value) / 100,
     );
-    d3sel.select("body").append(() => simulation);
+
+    this.visualizationArea.appendChild(simulation);
     this.updateChart();
   }
 
   updateChart() {
     if (this.simulation.infectedAmounts.length > 1) {
-      const secondChartSvg = SimulationGraphics.drawChart(this.simulation.infectedAmounts);
-      const existingCharts = d3sel.selectAll("svg");
-      if (existingCharts.size() > 1) {
-        existingCharts.nodes()[1].remove();
-      }
-      d3sel.select("body").append(() => secondChartSvg);
+      SimulationGraphics.drawChart(this.simulation.infectedAmounts, this.chartArea);
     }
   }
 
   updateSpreadRate() {
-    const elements = document.getElementsByName("sim-spread");
+    const elements = this.containerElement.querySelectorAll(".sim-spread-item input");
     for (let i = 0; i < elements.length; i++) {
       if (elements[i].checked) {
         this.spreadRate = elements[i].value;
@@ -540,12 +557,12 @@ class SimulationController {
   }
 
   modifyProbabilities() {
-    let inputs = document.getElementById("sim-restrictions").getElementsByTagName("input");
+    let inputs = this.containerElement.querySelectorAll(".sim-restriction-item input");
     this.modifiedProbabilities = [...this.probabilities];
   
     for (let i = 0; i < inputs.length; i++) {
       if (inputs[i].checked) {
-        const restrictionId = inputs[i].value; // Use value instead of id since the id format has sim- prefix
+        const restrictionId = inputs[i].value;
         const restriction = this.config.restrictions.find(r => r.id === restrictionId);
   
         this.config.connectionTypes.forEach((type, index) => {
@@ -569,12 +586,12 @@ class SimulationController {
 
     this.scenarioMenu.disabled = enabled;
   
-    let spreadInputs = document.getElementsByName("sim-spread");
+    let spreadInputs = this.containerElement.querySelectorAll(".sim-spread-item input");
     for (let i = 0; i < spreadInputs.length; i++) {
       spreadInputs[i].disabled = enabled;
     }
   
-    let restrictionsInputs = document.getElementById("sim-restrictions").getElementsByTagName("input");
+    let restrictionsInputs = this.containerElement.querySelectorAll(".sim-restriction-item input");
     for (let i = 0; i < restrictionsInputs.length; i++) {
       restrictionsInputs[i].disabled = enabled;
     }
@@ -589,16 +606,16 @@ class SimulationController {
   }
 
   changeCheckedSpread(id) {
-    let elements = document.getElementsByName("sim-spread");
+    let elements = this.containerElement.querySelectorAll(".sim-spread-item input");
     for (let i = 0; i < elements.length; i++) {
       elements[i].checked = false;
     }
   
-    document.getElementById("sim-" + id).checked = true;
+    this.containerElement.querySelector(`.sim-spread-item input[data-rate-id="${id}"]`).checked = true;
   }
 
   changeRestrictionsSelection(selected) {
-    let elements = document.getElementById("sim-restrictions").getElementsByTagName("input");
+    let elements = this.containerElement.querySelectorAll(".sim-restriction-item input");
     for (let i = 0; i < elements.length; i++) {
       elements[i].checked = selected;
     }
@@ -615,7 +632,7 @@ class SimulationController {
   selectSomeRestrictions(checkedRestrictions) {
     this.unselectAllRestrictions();
   
-    let elements = document.getElementById("sim-restrictions").getElementsByTagName("input");
+    let elements = this.containerElement.querySelectorAll(".sim-restriction-item input");
     for (let i = 0; i < elements.length; i++) {
       if (checkedRestrictions.includes(elements[i].value)) {
         elements[i].checked = true;
