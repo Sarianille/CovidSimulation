@@ -202,7 +202,7 @@ export class ConfigGenerator {
         import { SimulationController } from 'https://sarianille.github.io/CovidSimulation/bundle/simulation.js';
 
         const config = ${JSON.stringify(this.state, null, 2)};
-        new SimulationController(config, ${simID});
+        new SimulationController(config, "${simID}");
       </script>
       `
 
