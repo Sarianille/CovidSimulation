@@ -491,10 +491,7 @@ class SimulationGraphics {
 class SimulationController {
   constructor(config, simID) {
     this.config = config;
-
     this.containerElement = document.getElementById(simID);
-
-    this.spreadRate = 1;
 
     this.simulation = new SimulationLogic(config);
     this.simulationGraphics = new SimulationGraphics(this.simulation, config, this.containerElement);
@@ -528,7 +525,9 @@ class SimulationController {
       ).map(input => input.value);
       this.simulation.applyRestrictions(activeRestrictionIds);
 
-      this.updateSpreadRate();
+      const selectedSpreadRate = this.containerElement.querySelector(".sim-spread-item input:checked");
+      this.simulation.spreadRate = selectedSpreadRate.value;
+      
       this.simulation.intervalID = setInterval(() => {
         this.simulationGraphics.updateSimulation();
         if (this.simulation.tickCounter === 0) this.updateChart();
@@ -560,16 +559,6 @@ class SimulationController {
 
   updateChart() {
     SimulationGraphics.drawChart(this.simulation.infectedAmounts, this.chartArea);
-  }
-
-  updateSpreadRate() {
-    const elements = this.containerElement.querySelectorAll(".sim-spread-item input");
-    for (let i = 0; i < elements.length; i++) {
-      if (elements[i].checked) {
-        this.spreadRate = elements[i].value;
-        this.simulation.spreadRate = elements[i].value;
-      }
-    }
   }
 
   setInputState(enabled) {
