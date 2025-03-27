@@ -33,8 +33,30 @@ class SimulationLogic {
     this.intervalID = null;
     this.config = config;
 
-    this.probabilities = config.connectionTypes.map(type => type.baseProbability);
+    this.baseProbabilities = config.connectionTypes.map(type => type.baseProbability);
+    this.probabilities = [...this.baseProbabilities]; // Current active probabilities
     this.spreadRate = 1;
+  }
+
+  resetProbabilities() {
+    this.probabilities = [...this.baseProbabilities];
+  }
+
+  applyRestrictions(activeRestrictionIds) {
+    this.resetProbabilities();
+
+    const activeRestrictions = this.config.restrictions.filter(
+      restriction => activeRestrictionIds.includes(restriction.id)
+    );
+
+    activeRestrictions.forEach(restriction => {
+      this.config.connectionTypes.forEach((type, index) => {
+        const typeId = type.id;
+        if (restriction.multipliers[typeId]) {
+          this.probabilities[index] *= restriction.multipliers[typeId];
+        }
+      });
+    });
   }
 
   decideNodeCount(nodeCount) {
@@ -473,8 +495,6 @@ class SimulationController {
     this.containerElement = document.getElementById(simID);
 
     this.spreadRate = 1;
-    this.probabilities = config.connectionTypes.map(type => type.baseProbability);
-    this.modifiedProbabilities = [...this.probabilities];
 
     this.simulation = new SimulationLogic(config);
     this.simulationGraphics = new SimulationGraphics(this.simulation, config, this.containerElement);
@@ -503,7 +523,11 @@ class SimulationController {
     this.infectedSlider.oninput = sliderCallback;
 
     this.startButton.onclick = () => { 
-      this.modifyProbabilities();
+      const activeRestrictionIds = Array.from(
+        this.containerElement.querySelectorAll(".sim-restriction-item input:checked")
+      ).map(input => input.value);
+      this.simulation.applyRestrictions(activeRestrictionIds);
+
       this.updateSpreadRate();
       this.simulation.intervalID = setInterval(() => {
         this.simulationGraphics.updateSimulation();
@@ -546,27 +570,6 @@ class SimulationController {
         this.simulation.spreadRate = elements[i].value;
       }
     }
-  }
-
-  modifyProbabilities() {
-    let inputs = this.containerElement.querySelectorAll(".sim-restriction-item input");
-    this.modifiedProbabilities = [...this.probabilities];
-  
-    for (let i = 0; i < inputs.length; i++) {
-      if (inputs[i].checked) {
-        const restrictionId = inputs[i].value;
-        const restriction = this.config.restrictions.find(r => r.id === restrictionId);
-  
-        this.config.connectionTypes.forEach((type, index) => {
-          const typeId = type.id;
-          if (restriction.multipliers[typeId]) {
-            this.modifiedProbabilities[index] *= restriction.multipliers[typeId];
-          }
-        });
-      }
-    }
-  
-    this.simulation.probabilities = this.modifiedProbabilities;
   }
 
   setInputState(enabled) {
