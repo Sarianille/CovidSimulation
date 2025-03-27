@@ -520,18 +520,13 @@ class SimulationController {
     this.infectedSlider.oninput = sliderCallback;
 
     this.startButton.onclick = () => { 
-      const activeRestrictionIds = Array.from(
-        this.containerElement.querySelectorAll(".sim-restriction-item input:checked")
-      ).map(input => input.value);
-      this.simulation.applyRestrictions(activeRestrictionIds);
-
-      const selectedSpreadRate = this.containerElement.querySelector(".sim-spread-item input:checked");
-      this.simulation.spreadRate = selectedSpreadRate.value;
+      this.updateSimulationParameters();
       
       this.simulation.intervalID = setInterval(() => {
         this.simulationGraphics.updateSimulation();
         if (this.simulation.tickCounter === 0) this.updateChart();
       }, 1000);
+
       this.disableInputs();
     };
 
@@ -559,6 +554,16 @@ class SimulationController {
 
   updateChart() {
     SimulationGraphics.drawChart(this.simulation.infectedAmounts, this.chartArea);
+  }
+
+  updateSimulationParameters() {
+    const selectedSpreadRate = this.containerElement.querySelector(".sim-spread-item input:checked");
+    this.simulation.spreadRate = parseFloat(selectedSpreadRate.value);
+
+    const activeRestrictionIds = Array.from(
+      this.containerElement.querySelectorAll(".sim-restriction-item input:checked")
+    ).map(input => input.value);
+    this.simulation.applyRestrictions(activeRestrictionIds);
   }
 
   setInputState(enabled) {
