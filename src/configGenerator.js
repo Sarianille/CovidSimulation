@@ -143,20 +143,9 @@ export class ConfigGenerator {
       if (e.target.classList.contains('delete-btn')) {
         const item = e.target.closest('div[class$="-item"]');
         if (item) {
+          item.remove();
+
           this.updateState();
-          if (item.classList.contains('connection-type-item')) {
-            const index = Array.from(document.querySelectorAll('.connection-type-item')).indexOf(item);
-            this.state.connectionTypes.splice(index, 1);
-          } else if (item.classList.contains('spread-rate-item')) {
-            const index = Array.from(document.querySelectorAll('.spread-rate-item')).indexOf(item);
-            this.state.spreadRates.splice(index, 1);
-          } else if (item.classList.contains('restriction-item')) {
-            const index = Array.from(document.querySelectorAll('.restriction-item')).indexOf(item);
-            this.state.restrictions.splice(index, 1);
-          } else if (item.classList.contains('scenario-item')) {
-            const index = Array.from(document.querySelectorAll('.scenario-item')).indexOf(item);
-            this.state.scenarios.splice(index, 1);
-          }
           this.refreshDynamicSections();
         }
       }
