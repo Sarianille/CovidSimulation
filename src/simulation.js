@@ -74,10 +74,12 @@ class SimulationLogic {
     for (let i = 0; i < nodeCount * 2; i++) {
       const source = d3r.randomInt(0, nodeCount)();
       let target = d3r.randomInt(0, nodeCount)();
+
       while (source === target) target = d3r.randomInt(0, nodeCount)();
       
       const value = this.nodes[source].infected || this.nodes[target].infected ? 3 : 1;
       const type = d3r.randomInt(0, this.config.connectionTypes.length)();
+      
       this.links.push({ source, target, value, type });
     }
     this.deleteUnlinkedNodes();
@@ -566,24 +568,19 @@ class SimulationController {
     this.simulation.applyRestrictions(activeRestrictionIds);
   }
 
-  setInputState(enabled) {
-    this.startButton.disabled = enabled;
-    this.stopButton.disabled = !enabled;
+  setInputState(disabled) {
+    this.startButton.disabled = disabled;
+    this.stopButton.disabled = !disabled;
 
-    this.nodeSlider.disabled = enabled;
-    this.infectedSlider.disabled = enabled;
+    this.nodeSlider.disabled = disabled;
+    this.infectedSlider.disabled = disabled;
 
-    this.scenarioMenu.disabled = enabled;
+    this.scenarioMenu.disabled = disabled;
   
-    let spreadInputs = this.containerElement.querySelectorAll(".sim-spread-item input");
-    for (let i = 0; i < spreadInputs.length; i++) {
-      spreadInputs[i].disabled = enabled;
-    }
-  
-    let restrictionsInputs = this.containerElement.querySelectorAll(".sim-restriction-item input");
-    for (let i = 0; i < restrictionsInputs.length; i++) {
-      restrictionsInputs[i].disabled = enabled;
-    }
+    const inputs = this.containerElement.querySelectorAll(
+      ".sim-spread-item input, .sim-restriction-item input"
+    );
+    inputs.forEach(input => input.disabled = disabled);
   }
 
   disableInputs() {
@@ -594,39 +591,20 @@ class SimulationController {
     this.setInputState(false);
   }
 
-  changeCheckedSpread(id) {
-    let elements = this.containerElement.querySelectorAll(".sim-spread-item input");
-    for (let i = 0; i < elements.length; i++) {
-      elements[i].checked = false;
-    }
-  
-    this.containerElement.querySelector(`.sim-spread-item input[data-rate-id="${id}"]`).checked = true;
+  selectSpreadRate(id) {
+    const inputs = this.containerElement.querySelectorAll(".sim-spread-item input");
+
+    inputs.forEach(input => {
+      input.checked = input.dataset.rateId === id;
+    });
   }
 
-  changeRestrictionsSelection(selected) {
-    let elements = this.containerElement.querySelectorAll(".sim-restriction-item input");
-    for (let i = 0; i < elements.length; i++) {
-      elements[i].checked = selected;
-    }
-  }
+  selectRestrictions(restrictionsToSelect = []) {
+    const checkboxes = this.containerElement.querySelectorAll(".sim-restriction-item input");
 
-  unselectAllRestrictions() {
-    this.changeRestrictionsSelection(false);
-  }
-
-  selectAllRestrictions() {
-    this.changeRestrictionsSelection(true);
-  }
-
-  selectSomeRestrictions(checkedRestrictions) {
-    this.unselectAllRestrictions();
-  
-    let elements = this.containerElement.querySelectorAll(".sim-restriction-item input");
-    for (let i = 0; i < elements.length; i++) {
-      if (checkedRestrictions.includes(elements[i].value)) {
-        elements[i].checked = true;
-      }
-    }
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = restrictionsToSelect.includes(checkbox.value);
+    });
   }
 
   updateScenario() {
@@ -634,15 +612,14 @@ class SimulationController {
     const scenario = this.config.scenarios[scenarioIndex];
 
     if (scenario.spreadRate) {
-      this.changeCheckedSpread(scenario.spreadRate);
+      this.selectSpreadRate(scenario.spreadRate);
     }
 
-    if (scenario.restrictions.length === 0) {
-      this.unselectAllRestrictions();
-    } else if (scenario.restrictions.length === this.config.restrictions.length) {
-      this.selectAllRestrictions();
-    } else { 
-      this.selectSomeRestrictions(scenario.restrictions);
+    if (scenario.restrictions.length === this.config.restrictions.length) {
+      const allRestrictionsIds = this.config.restrictions.map(restriction => restriction.id);
+      this.selectRestrictions(allRestrictionsIds);
+    } else {
+      this.selectRestrictions(scenario.restrictions);
     }
   }
 }
