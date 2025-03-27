@@ -277,9 +277,7 @@ class SimulationGraphics {
       .attr("stroke-width", 1.5)
       .attr("d", line(infectedAmounts));
 
-    while (chartContainer.firstChild) {
-      chartContainer.removeChild(chartContainer.firstChild);
-    }
+    chartContainer.innerHTML = "";
     chartContainer.appendChild(svg.node());
 
     return svg.node();
@@ -294,7 +292,6 @@ class SimulationGraphics {
   generateHTML(config) {
     const infoTexts = this.getInfoTexts();
     const containerElement = this.containerElement;
-    const simID = containerElement.id;
 
     containerElement.innerHTML = `
       <div class="sim-text">
@@ -470,7 +467,6 @@ class SimulationGraphics {
 class SimulationController {
   constructor(config, simID) {
     this.config = config;
-    this.simID = simID;
 
     this.containerElement = document.getElementById(simID);
 
@@ -499,9 +495,7 @@ class SimulationController {
   }
 
   initializeEventListeners() {
-    const sliderCallback = () => {
-      this.createInitialSimulation();
-    };
+    const sliderCallback = () => this.createInitialSimulation();
 
     this.nodeSlider.oninput = sliderCallback;
     this.infectedSlider.oninput = sliderCallback;
@@ -527,9 +521,7 @@ class SimulationController {
   }
 
   createInitialSimulation() {    
-    while (this.visualizationArea.firstChild) {
-      this.visualizationArea.removeChild(this.visualizationArea.firstChild);
-    }
+    this.visualizationArea.innerHTML = "";
 
     const simulation = this.simulationGraphics.drawSimulation(
       Number(this.nodeSlider.value), 
@@ -541,9 +533,7 @@ class SimulationController {
   }
 
   updateChart() {
-    if (this.simulation.infectedAmounts.length > 1) {
-      SimulationGraphics.drawChart(this.simulation.infectedAmounts, this.chartArea);
-    }
+    SimulationGraphics.drawChart(this.simulation.infectedAmounts, this.chartArea);
   }
 
   updateSpreadRate() {
