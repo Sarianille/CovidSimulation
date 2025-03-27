@@ -187,7 +187,9 @@ class SimulationGraphics {
 
     // Initialize the D3 force simulation
     this.simulation = d3f.forceSimulation(nodes)
-      .force("link", d3f.forceLink(links).id(d => d.index).strength(d => (d.type === 3 ? 0.1 : 0.7)))
+      .force("link", d3f.forceLink(links).id(d => d.index).strength(d => {
+        return this.config.connectionTypes[d.type].attractionStrength;
+      }))
       .force("charge", d3f.forceManyBody())
       .force("center", d3f.forceCenter(this.width / 2, this.height / 2))
       .on("tick", () => this.ticked(link, node));

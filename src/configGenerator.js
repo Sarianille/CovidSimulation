@@ -105,7 +105,7 @@ export class ConfigGenerator {
     document.getElementById('addConnectionType').addEventListener('click', () => {
       this.updateState();
       this.state.connectionTypes.push({
-        id: '', label: '', color: '#000000', baseProbability: 1
+        id: '', label: '', color: '#000000', baseProbability: 1, attractionStrength: 0.7
       });
       this.refreshDynamicSections();
     });
@@ -235,7 +235,8 @@ export class ConfigGenerator {
         id: item.querySelector('.type-id').value,
         label: item.querySelector('.type-label').value,
         color: item.querySelector('.type-color').value,
-        baseProbability: parseFloat(item.querySelector('.type-probability').value)
+        baseProbability: parseFloat(item.querySelector('.type-probability').value),
+        attractionStrength: parseFloat(item.querySelector('.type-attraction').value)
       });
     });
     return types;
@@ -341,6 +342,7 @@ export class ConfigGenerator {
         <input type="text" placeholder="Label" value="${type.label}" class="type-label">
         <input type="color" value="${type.color}" class="type-color">
         <input type="number" step="0.01" placeholder="Base Probability" value="${type.baseProbability}" class="type-probability">
+        <input type="number" step="0.1" placeholder="Attraction Strength" value="${type.attractionStrength}" class="type-attraction">
         <button type="button" class="delete-btn">Delete</button>
       </div>
     `).join('');

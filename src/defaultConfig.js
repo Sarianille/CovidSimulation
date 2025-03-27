@@ -15,10 +15,10 @@ export const defaultConfig = {
       { id: 'spreadHigh', label: 'High', value: 2 }
     ],
     connectionTypes: [
-      { id: 'family', label: 'Family', color: '#00ff00', baseProbability: 0.1 },
-      { id: 'friends', label: 'Friends', color: '#800080', baseProbability: 0.05 },
-      { id: 'workSchool', label: 'Work/School', color: '#0000ff', baseProbability: 0.05 },
-      { id: 'strangers', label: 'Strangers', color: '#808080', baseProbability: 0.01 }
+      { id: 'family', label: 'Family', color: '#00ff00', baseProbability: 0.1, attractionStrength: 0.7 },
+      { id: 'friends', label: 'Friends', color: '#800080', baseProbability: 0.05, attractionStrength: 0.7 },
+      { id: 'workSchool', label: 'Work/School', color: '#0000ff', baseProbability: 0.05, attractionStrength: 0.7 },
+      { id: 'strangers', label: 'Strangers', color: '#808080', baseProbability: 0.01, attractionStrength: 0.1 }
     ],
     nodeColors: {
       healthy: '#808080',
