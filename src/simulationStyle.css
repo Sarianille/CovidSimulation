@@ -6,7 +6,7 @@ svg {
   display: block;
 }
 
-.sim-text {
+.sim-text, .sim-parameters {
   width: 80vw;
   max-width: 1200px;
   margin: 0 auto 20px auto;
@@ -28,13 +28,6 @@ svg {
     "sliders restrictions"
     "modifiers restrictions"
     "scenarios scenarios";
-  width: 80vw;
-  max-width: 1200px;
-  background-color: #FFFFFF;
-  padding: 25px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin: 0 auto 20px auto;
   gap: 20px;
 }
 
@@ -50,8 +43,7 @@ svg {
   text-align: left;
 }
 
-.sim-sliders label {
-  font-weight: 500;
+.sim-sliders label, .sim-modifiers label, .sim-restrictions label {
   margin-bottom: 8px;
 }
 
@@ -87,28 +79,20 @@ svg {
   background: #e0e0e0;
 }
 
-.sim-slider:disabled::-webkit-slider-thumb {
+.sim-slider:disabled::-webkit-slider-thumb, .sim-slider:disabled::-moz-range-thumb {
   background: #b0b0b0;
   cursor: not-allowed;
 }
 
-.sim-slider:disabled::-moz-range-thumb {
-  background: #b0b0b0;
-  cursor: not-allowed;
-}
-
-.sim-modifiers {
+.sim-modifiers, .sim-restrictions, .sim-scenarios {
   grid-area: modifiers;
   padding: 15px;
   background-color: #f0f6fc;
   border-radius: 6px;
 }
 
-.sim-modifiers label {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 12px;
-  text-align: left;
+.sim-modifiers {
+  grid-area: modifiers;
 }
 
 .sim-modifiers div {
@@ -132,16 +116,6 @@ svg {
 
 .sim-restrictions {
   grid-area: restrictions;
-  padding: 15px;
-  background-color: #f0f6fc;
-  border-radius: 6px;
-}
-
-.sim-restrictions label {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 12px;
-  text-align: left;
 }
 
 .sim-restriction-options {
@@ -184,13 +158,9 @@ svg {
   align-items: center;
   justify-content: flex-start;
   margin: 20px 0;
-  padding: 15px;
-  background-color: #f0f6fc;
-  border-radius: 6px;
 }
 
 .sim-scenarios label {
-  font-weight: 500;
   margin-right: 15px;
   min-width: fit-content;
 }
@@ -217,8 +187,7 @@ svg {
   margin: 20px 0;
 }
 
-.sim-start-button {
-  background-color: #3498db;
+.sim-start-button, .sim-stop-button {
   color: white;
   padding: 12px 24px;
   border: none;
@@ -228,6 +197,10 @@ svg {
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 120px;
+}
+
+.sim-start-button {
+  background-color: #3498db;
 }
 
 .sim-start-button:hover {
@@ -236,15 +209,6 @@ svg {
 
 .sim-stop-button {
   background-color: #e74c3c;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 4px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 120px;
 }
 
 .sim-stop-button:hover {
