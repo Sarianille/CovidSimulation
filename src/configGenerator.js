@@ -25,7 +25,7 @@ export class ConfigGenerator {
       
       <div class="section">
         <h2>Display Options</h2>
-        <div class="input-group">
+        <div class="section-group">
           <label>
             <input type="checkbox" id="showHeader" ${this.state.showHeader ? 'checked' : ''}>
             Show heading and introduction text
@@ -45,6 +45,22 @@ export class ConfigGenerator {
       
       <div class="section">
         <h2>Connection Types</h2>
+        <div class="section-group">
+          <p class="field-description">Define the types of connections between nodes. Each connection should 
+          have a unique ID, a display name shown to the user, a color for visualization, a base probability
+          of spreading the infection (0-1 range, where 1 means 100% chance of spreading), and an attraction 
+          strength that affects how close nodes are to each other (0-2 range).</p>
+        </div>
+
+        <div class="field-headers connection-type-headers">
+          <div class="header-item">Type ID</div>
+          <div class="header-item">Display Label</div>
+          <div class="header-item">Color</div>
+          <div class="header-item">Spread Probability</div>
+          <div class="header-item">Attraction Strength</div>
+          <div class="header-item">Actions</div>
+        </div>
+
         <div id="connectionTypes">
           ${this.renderConnectionTypes()}
         </div>
@@ -53,6 +69,18 @@ export class ConfigGenerator {
       
       <div class="section">
         <h2>Spread Rates</h2>
+        <div class="section-group">
+          <p class="field-description">Define the rates at which the infection spreads. Each rate should 
+          have a unique ID, a display name shown to the user, and a multiplier that affects the speed of infection spread.</p>
+        </div>
+
+        <div class="field-headers spread-rate-headers">
+          <div class="header-item">Rate ID</div>
+          <div class="header-item">Display Label</div>
+          <div class="header-item">Rate Multiplier</div>
+          <div class="header-item">Actions</div>
+        </div>
+
         <div id="spreadRates">
           ${this.renderSpreadRates()}
         </div>
@@ -61,6 +89,12 @@ export class ConfigGenerator {
       
       <div class="section">
         <h2>Restrictions</h2>
+        <div class="section-group">
+          <p class="field-description">Define the restrictions that can be applied to the simulation. Each 
+          restriction should have a unique ID, a display name shown to the user, a tooltip with additional information,
+          and multipliers for each connection type that affect the spread of the infection.</p>
+        </div>
+
         <div id="restrictions">
           ${this.renderRestrictions()}
         </div>
@@ -69,6 +103,11 @@ export class ConfigGenerator {
 
       <div class="section">
         <h2>Scenarios</h2>
+        <div class="section-group">
+          <p class="field-description">Define the scenarios for the simulation. Each scenario should have 
+          a unique label. It can have a spread rate and a set of enabled restrictions, but doesn't have to.</p>
+        </div>
+
         <div id="scenarios">
           ${this.renderScenarios()}
         </div>
@@ -105,7 +144,7 @@ export class ConfigGenerator {
     document.getElementById('addConnectionType').addEventListener('click', () => {
       this.updateState();
       this.state.connectionTypes.push({
-        id: '', label: '', color: '#000000', baseProbability: 1, attractionStrength: 0.7
+        id: '', label: '', color: '#000000', baseProbability: 0.05, attractionStrength: 0.7
       });
       this.refreshDynamicSections();
     });
@@ -279,8 +318,9 @@ export class ConfigGenerator {
 
   renderNodeConfig() {
     return `
-      <div class="input-group">
+      <div class="section-group">
         <h3>Node Count Range</h3>
+        <p class="field-description">Define the minimum and maximum number of nodes that can appear in the simulation.</p>
         <label>
           Minimum:
           <input type="number" id="nodeCountMin" value="${this.state.nodeCount.min}">
@@ -291,19 +331,21 @@ export class ConfigGenerator {
         </label>
       </div>
       
-      <div class="input-group">
+      <div class="section-group">
         <h3>Infected Percentage Range</h3>
+        <p class="field-description">Define the minimum and maximum percentage of initially infected nodes in the simulation.
+        The default value is the percentage of infected nodes at the start of the simulation.</p>
         <label>
           Minimum:
-          <input type="number" id="infectedMin" value="${this.state.infectedPercentage.min}">
+          <input type="number" id="infectedMin" value="${this.state.infectedPercentage.min}" min="0" max="100">
         </label>
         <label>
           Maximum:
-          <input type="number" id="infectedMax" value="${this.state.infectedPercentage.max}">
+          <input type="number" id="infectedMax" value="${this.state.infectedPercentage.max}" min="0" max="100">
         </label>
         <label>
           Default:
-          <input type="number" id="infectedDefault" value="${this.state.infectedPercentage.default}">
+          <input type="number" id="infectedDefault" value="${this.state.infectedPercentage.default}" min="0" max="100">
         </label>
       </div>
     `;
@@ -311,7 +353,8 @@ export class ConfigGenerator {
 
   renderColors() {
     return `
-      <div class="input-group">
+      <div class="section-group">
+        <p class="field-description">Choose colors to represent different node states in the simulation.</p>
         <label>
           Healthy Node Color:
           <input type="color" id="healthyColor" value="${this.state.nodeColors.healthy}">
@@ -330,8 +373,8 @@ export class ConfigGenerator {
         <input type="text" placeholder="ID" value="${type.id}" class="type-id">
         <input type="text" placeholder="Label" value="${type.label}" class="type-label">
         <input type="color" value="${type.color}" class="type-color">
-        <input type="number" step="0.01" placeholder="Base Probability" value="${type.baseProbability}" class="type-probability">
-        <input type="number" step="0.1" placeholder="Attraction Strength" value="${type.attractionStrength}" class="type-attraction">
+        <input type="number" step="0.01" placeholder="Base Probability" value="${type.baseProbability}" class="type-probability" min="0" max="1">
+        <input type="number" step="0.1" placeholder="Attraction Strength" value="${type.attractionStrength}" class="type-attraction" min="0" max="2">
         <button type="button" class="delete-btn">Delete</button>
       </div>
     `).join('');
@@ -352,20 +395,28 @@ export class ConfigGenerator {
     return this.state.restrictions.map(restriction => `
       <div class="restriction-item">
         <div class="basic-info">
-          <input type="text" placeholder="ID" value="${restriction.id}" class="restriction-id">
-          <input type="text" placeholder="Label" value="${restriction.label}" class="restriction-label">
-          <textarea placeholder="Tooltip" class="restriction-tooltip">${restriction.tooltip}</textarea>
+          <label><span class="info-label">Restriction ID</span>
+            <input type="text" placeholder="ID" value="${restriction.id}" class="restriction-id">
+          </label>
+          <label><span class="info-label">Display Label</span>
+            <input type="text" placeholder="Label" value="${restriction.label}" class="restriction-label">
+          </label>
+          <label><span class="info-label">Tooltip</span>
+            <textarea placeholder="Tooltip" class="restriction-tooltip">${restriction.tooltip}</textarea>
+          </label>
         </div>
-        <div class="multipliers">
-          ${this.state.connectionTypes.map(type => `
-            <label>${type.label} multiplier:
-              <input type="number" step="0.01" 
-                     value="${restriction.multipliers[type.id] ?? 1}"
-                     data-connection-type="${type.id}"
-                     class="multiplier-value">
-            </label>
-          `).join('')}
-        </div>
+        <label><span class="info-label">Connection Type Multipliers</span>
+          <div class="multipliers">
+            ${this.state.connectionTypes.map(type => `
+              <label>${type.label} multiplier:
+                <input type="number" step="0.01" 
+                      value="${restriction.multipliers[type.id] ?? 1}"
+                      data-connection-type="${type.id}"
+                      class="multiplier-value">
+              </label>
+            `).join('')}
+          </div>
+        </label>
         <button type="button" class="delete-btn">Delete</button>
       </div>
     `).join('');
@@ -374,17 +425,21 @@ export class ConfigGenerator {
   renderScenarios() {
     return this.state.scenarios.map(scenario => `
       <div class="scenario-item">
-        <input type="text" placeholder="Label" value="${scenario.label}" class="scenario-label">
-        <select class="scenario-spread-rate">
-          <option value="">Select Spread Rate</option>
-          ${this.state.spreadRates.map(rate => 
-            `<option value="${rate.id}" ${rate.id === scenario.spreadRate ? 'selected' : ''}>
-              ${rate.label}
-            </option>`
-          ).join('')}
-        </select>
+        <label><span class="info-label">Scenario Label</span>
+          <input type="text" placeholder="Label" value="${scenario.label}" class="scenario-label">
+        </label>
+        <label><span class="info-label">Spread Rate</span>
+          <select class="scenario-spread-rate">
+            <option value="">Select Spread Rate</option>
+            ${this.state.spreadRates.map(rate => 
+              `<option value="${rate.id}" ${rate.id === scenario.spreadRate ? 'selected' : ''}>
+                ${rate.label}
+              </option>`
+            ).join('')}
+          </select>
+        </label>
         <div class="scenario-restrictions">
-          <h4>Enabled Restrictions:</h4>
+          <h4 class="info-label">Enabled Restrictions</h4>
           ${this.state.restrictions.map(restriction => `
             <label>
               <input type="checkbox" value="${restriction.id}" 

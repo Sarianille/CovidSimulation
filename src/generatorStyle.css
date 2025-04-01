@@ -14,14 +14,15 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.input-group {
+.section-group {
   margin-bottom: 20px;
   padding: 15px;
   background-color: #f0f6fc;
   border-radius: 6px;
+  border: 1px solid #d5e4f3;
 }
 
-.input-group label {
+.section-group label {
   display: block;
   margin-bottom: 12px;
   font-weight: 500;
@@ -57,6 +58,15 @@ input[type="color"] {
 
 .restriction-item {
   grid-template-columns: 1fr;
+}
+
+.restriction-item input {
+  margin-bottom: 15px;
+}
+
+.info-label {
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .multipliers {
@@ -140,4 +150,28 @@ textarea {
 
 .meta-buttons button {
   min-width: 200px;
+}
+
+.field-headers {
+  display: grid;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  background-color: #f0f6fc;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid #d5e4f3;
+  font-weight: 600;
+}
+
+.connection-type-headers, .spread-rate-headers {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.header-item {
+  padding: 5px;
+}
+
+.field-description {
+  margin: 5px 0 12px 0;
+  font-size: 0.9rem;
 }
