@@ -23,8 +23,8 @@ function tryInfect(node, probability, spreadRate) {
 }
 
 class SimulationLogic {
-  infectedAmounts = [{ x: 0, y: 0 }, { x: 5, y: 0 }];
-  tickCounter = 5;
+  infectedAmounts = [{ x: 0, y: 0 }];
+  tickCount = 0;
 
   constructor(config) {
     this.nodes = [];
@@ -140,23 +140,17 @@ class SimulationLogic {
   }
 
   updateInfectedAmounts(newInfectionsCount) {
-    const lastEntry = this.infectedAmounts[this.infectedAmounts.length - 1];
+    this.tickCount++;
 
-    if (this.tickCounter === 0) {
-      this.infectedAmounts.push({
-        x: lastEntry.x + 5,
-        y: newInfectionsCount
-      });
-      this.tickCounter = 5;
-    } else {
-      this.tickCounter--;
-      lastEntry.y += newInfectionsCount;
-    }
+    this.infectedAmounts.push({
+      x: this.tickCount,
+      y: newInfectionsCount
+    });
   }
 
   resetChartData() {
-    this.infectedAmounts = [{ x: 0, y: 0 }, { x: 5, y: 0 }];
-    this.tickCounter = 5;
+    this.infectedAmounts = [{ x: 0, y: 0 }];
+    this.tickCounter = 0;
   }
 
   initializeSimulation(nodeCount, infectedPercentage) {
@@ -526,7 +520,7 @@ class SimulationController {
       
       this.simulation.intervalID = setInterval(() => {
         this.simulationGraphics.updateSimulation();
-        if (this.simulation.tickCounter === 0) this.updateChart();
+        this.updateChart();
       }, 1000);
 
       this.disableInputs();
