@@ -24,6 +24,7 @@ function tryInfect(node, probability, spreadRate) {
 
 class SimulationLogic {
   infectedAmounts = [{ x: 0, y: 0 }];
+  totalInfectedAmounts = [{ x: 0, y: 0 }];
   tickCount = 0;
 
   constructor(config) {
@@ -65,6 +66,9 @@ class SimulationLogic {
 
   createNodes(nodeCount, infectedPercentage) {
     this.nodes = Array.from({ length: nodeCount }, () => new GraphNode(d3r.randomBernoulli(infectedPercentage)()));
+
+    const initialInfectedCount = this.nodes.filter(node => node.infected).length;
+    this.totalInfectedAmounts[0].y = initialInfectedCount;
   }
 
   createLinks(nodeCount) {
@@ -146,11 +150,19 @@ class SimulationLogic {
       x: this.tickCount,
       y: newInfectionsCount
     });
+
+    this.totalInfectedAmounts.push({
+      x: this.tickCount,
+      y: this.totalInfectedAmounts[this.totalInfectedAmounts.length - 1].y + newInfectionsCount
+    });
   }
 
   resetChartData() {
+    const initialInfectedCount = this.nodes.filter(node => node.infected).length;
+
     this.infectedAmounts = [{ x: 0, y: 0 }];
-    this.tickCounter = 0;
+    this.totalInfectedAmounts = [{ x: 0, y: initialInfectedCount }];
+    this.tickCount = 0;
   }
 
   initializeSimulation(nodeCount, infectedPercentage) {
@@ -245,7 +257,7 @@ class SimulationGraphics {
     event.subject.fy = null;
   }
 
-  static drawChart(infectedAmounts, chartContainer) {
+  static drawChart(infectedAmounts, totalInfectedAmounts, chartContainer) {
     const width = 800;
     const height = 300;
     const marginTop = 30;
@@ -285,9 +297,9 @@ class SimulationGraphics {
       .attr("y", 25)
       .attr("fill", "currentColor")
       .attr("text-anchor", "start")
-      .text("Newly infected");
+      .text("Infections");
 
-    const line = d3sh.line()
+    const newlyInfectedLine = d3sh.line()
       .x(d => x(d.x))
       .y(d => y(d.y));
 
@@ -295,7 +307,41 @@ class SimulationGraphics {
       .attr("fill", "none")
       .attr("stroke", "red")
       .attr("stroke-width", 1.5)
-      .attr("d", line(infectedAmounts));
+      .attr("d", newlyInfectedLine(infectedAmounts));
+
+    const totalInfectedLine = d3sh.line()
+      .x(d => x(d.x))
+      .y(d => y(d.y));
+
+    svg.append("path")
+      .attr("fill", "none")
+      .attr("stroke", "blue")
+      .attr("stroke-width", 1.5)
+      .attr("d", totalInfectedLine(totalInfectedAmounts));
+
+    const legend = svg.append("g")
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 10)
+      .attr("text-anchor", "end")
+      .selectAll("g")
+      .data([
+        { color: "red", label: "New Infections" },
+        { color: "blue", label: "Total Infected" }
+      ])
+      .join("g")
+      .attr("transform", (d, i) => `translate(${width - 20}, ${marginTop + i * 20})`);
+
+    legend.append("rect")
+      .attr("x", -15)
+      .attr("width", 15)
+      .attr("height", 2)
+      .attr("fill", d => d.color);
+
+    legend.append("text")
+      .attr("x", -20)
+      .attr("y", 0)
+      .attr("dy", "0.35em")
+      .text(d => d.label);
 
     chartContainer.innerHTML = "";
     chartContainer.appendChild(svg.node());
@@ -549,7 +595,11 @@ class SimulationController {
   }
 
   updateChart() {
-    SimulationGraphics.drawChart(this.simulation.infectedAmounts, this.chartArea);
+    SimulationGraphics.drawChart(
+      this.simulation.infectedAmounts, 
+      this.simulation.totalInfectedAmounts, 
+      this.chartArea
+    );
   }
 
   updateSimulationParameters() {
