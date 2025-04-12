@@ -265,12 +265,22 @@ class SimulationGraphics {
     const marginBottom = 30;
     const marginLeft = 30;
 
+    const maxX = Math.max(
+      ...infectedAmounts.map(d => d.x),
+      ...totalInfectedAmounts.map(d => d.x)
+    )
+
+    const maxY = Math.max(
+      ...infectedAmounts.map(d => d.y),
+      ...totalInfectedAmounts.map(d => d.y)
+    )
+
     const x = d3sc.scaleLinear()
-      .domain([0, 100])
+      .domain([0, Math.max(100, maxX)])
       .range([marginLeft, width - marginRight]);
 
     const y = d3sc.scaleLinear()
-      .domain([0, 50])
+      .domain([0, Math.max(50, maxY)])
       .range([height - marginBottom, marginTop]);
 
     const svg = d3sel.create("svg")
