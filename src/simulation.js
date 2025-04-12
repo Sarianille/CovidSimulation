@@ -153,7 +153,7 @@ class SimulationLogic {
 
     this.totalInfectedAmounts.push({
       x: this.tickCount,
-      y: this.totalInfectedAmounts[this.totalInfectedAmounts.length - 1].y + newInfectionsCount
+      y: this.nodes.filter(node => node.infected).length
     });
   }
 
