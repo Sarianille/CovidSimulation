@@ -293,7 +293,7 @@ class SimulationGraphics {
       .attr("transform", `translate(0,${height - marginBottom})`)
       .call(d3a.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
       .append("text")
-      .attr("x", width - 30)
+      .attr("x", width - marginRight)
       .attr("y", -6)
       .attr("fill", "currentColor")
       .attr("text-anchor", "end")
@@ -329,28 +329,38 @@ class SimulationGraphics {
       .attr("stroke-width", 1.5)
       .attr("d", totalInfectedLine(totalInfectedAmounts));
 
-    const legend = svg.append("g")
-      .attr("font-family", "sans-serif")
-      .attr("font-size", 10)
-      .attr("text-anchor", "end")
-      .selectAll("g")
+    const legendGroup = svg.append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(${width - marginRight - 100}, ${marginTop})`);
+
+    legendGroup.append("rect")
+      .attr("width", 100)
+      .attr("height", 50)
+      .attr("fill", "white")
+      .attr("fill-opacity", 0.8)
+      .attr("rx", 5)
+      .attr("ry", 5)
+
+    const legend = legendGroup.selectAll(".legend-item")
       .data([
         { color: "red", label: "New Infections" },
         { color: "blue", label: "Total Infected" }
       ])
-      .join("g")
-      .attr("transform", (d, i) => `translate(${width - 20}, ${marginTop + i * 20})`);
+      .enter()
+      .append("g")
+      .attr("class", "legend-item")
+      .attr("transform", (d, i) => `translate(10, ${15 + i * 20})`);
 
     legend.append("rect")
-      .attr("x", -15)
       .attr("width", 15)
       .attr("height", 2)
       .attr("fill", d => d.color);
 
     legend.append("text")
-      .attr("x", -20)
+      .attr("x", 20)
       .attr("y", 0)
       .attr("dy", "0.35em")
+      .attr("text-anchor", "start")
       .text(d => d.label);
 
     chartContainer.innerHTML = "";
