@@ -555,6 +555,12 @@ class SimulationController {
     this.config = config;
     this.containerElement = document.getElementById(simID);
 
+    this.eventListeners = {
+      'simulationStarted': [],
+      'simulationStopped': [],
+      'simulationUpdated': []
+    };
+
     this.simulation = new SimulationLogic(config);
     this.simulationGraphics = new SimulationGraphics(this.simulation, config, this.containerElement);
 
@@ -563,6 +569,36 @@ class SimulationController {
     this.initializeElements();
     this.initializeEventListeners();
     this.createInitialSimulation();
+  }
+
+  addEventListener(eventName, callback) {
+    if (this.eventListeners[eventName]) {
+      this.eventListeners[eventName].push(callback);
+      return true;
+    }
+    return false;
+  }
+
+  removeEventListener(eventName, callback) {
+    if (this.eventListeners[eventName]) {
+      this.eventListeners[eventName] = this.eventListeners[eventName]
+        .filter(listener => listener !== callback);
+      return true;
+    }
+    return false;
+  }
+
+  triggerEvent(eventName, data) {
+    if (this.eventListeners[eventName]) {
+      this.eventListeners[eventName].forEach(callback =>
+      {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(`Error executing event listener for ${eventName}:`, error);
+        }
+      });
+    }
   }
 
   initializeElements() {
@@ -587,13 +623,37 @@ class SimulationController {
       this.simulation.intervalID = setInterval(() => {
         this.simulationGraphics.updateSimulation();
         this.updateChart();
+
+        this.triggerEvent('simulationUpdated', {
+          nodesAmount: this.simulation.nodes.length,
+          newInfections: this.simulation.infectedAmounts[this.simulation.infectedAmounts.length - 1].y,
+          totalInfected: this.simulation.nodes.filter(node => node.infected).length,
+          tickCount: this.simulation.tickCount
+          
+        });
       }, 1000);
+
+      this.triggerEvent('simulationStarted', {
+        nodesAmount: this.simulation.nodes.length,
+        initialInfectedCount: this.simulation.nodes.filter(node => node.infected).length,
+        spreadRate: this.simulation.spreadRate,
+        connectionProbabilities: [...this.simulation.probabilities]
+      });
 
       this.disableInputs();
     };
 
     this.stopButton.onclick = () => { 
       clearInterval(this.simulation.intervalID); 
+
+      this.triggerEvent('simulationStopped', {
+        nodesAmount: this.simulation.nodes.length,
+        finalInfectedCount: this.simulation.nodes.filter(node => node.infected).length,
+        duration: this.simulation.tickCount,
+        infectedAmounts: [...this.simulation.infectedAmounts],
+        totalInfectedAmounts: [...this.simulation.totalInfectedAmounts]
+      });
+
       this.enableInputs();
     };
 
