@@ -204,6 +204,19 @@ export class ConfigGenerator {
       this.updateState();
       document.body.innerHTML = '';
 
+      const simID = "sim-" + crypto.randomUUID();
+      const embedCode = `
+<div id="${simID}"></div>
+<link rel="stylesheet" href="https://sarianille.github.io/CovidSimulation/bundle/simulation.css">
+<script type="module">
+import { SimulationController } from 'https://sarianille.github.io/CovidSimulation/bundle/simulation.js';
+
+const config = ${JSON.stringify(this.state, null, 2)};
+
+new SimulationController(config, "${simID}");
+</script>
+`
+
       this.addMetaButtons();
 
       document.body.innerHTML += `
@@ -211,6 +224,14 @@ export class ConfigGenerator {
       `;
 
       new this.SimulationController(this.state, "sim-example");
+
+      document.body.innerHTML += `
+        <div class="config-display">
+          <h3>Simulation Code</h3>
+          <textarea class="config-textarea" rows="20" readonly>${embedCode}</textarea>
+        </div>
+      `;
+
       this.addMetaListeners();
     });
   }
@@ -222,17 +243,7 @@ export class ConfigGenerator {
     });
 
     document.getElementById('copy-button').addEventListener('click', () => {
-      const simID = "sim-" + crypto.randomUUID();
-      const embedCode = `
-      <div id="${simID}"></div>
-      <link rel="stylesheet" href="https://sarianille.github.io/CovidSimulation/bundle/simulation.css">
-      <script type="module">
-        import { SimulationController } from 'https://sarianille.github.io/CovidSimulation/bundle/simulation.js';
-
-        const config = ${JSON.stringify(this.state, null, 2)};
-        new SimulationController(config, "${simID}");
-      </script>
-      `
+      const embedCode = document.querySelector('.config-textarea').value;
 
       navigator.clipboard.writeText(embedCode).then(() => {
         alert('Embed code copied to clipboard!');
