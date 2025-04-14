@@ -15,19 +15,12 @@ class GraphNode {
   }
 }
 
-function tryInfect(node, probability, spreadRate) {
-  if (node.infected) return false;
-
-  node.infected = d3r.randomBernoulli(probability * spreadRate)();
-  return node.infected;
-}
-
 class SimulationLogic {
   infectedAmounts = [{ x: 0, y: 0 }];
   totalInfectedAmounts = [{ x: 0, y: 0 }];
   tickCount = 0;
 
-  constructor(config) {
+  constructor(config, randomFunctionsFactories = {}) {
     this.nodes = [];
     this.links = [];
 
@@ -37,6 +30,9 @@ class SimulationLogic {
     this.baseProbabilities = config.connectionTypes.map(type => type.baseProbability);
     this.probabilities = [...this.baseProbabilities]; // Current active probabilities
     this.spreadRate = 1;
+
+    this.randomInt = randomFunctionsFactories.randomInt || d3r.randomInt;
+    this.randomBernoulli = randomFunctionsFactories.randomBernoulli || d3r.randomBernoulli;
   }
 
   resetProbabilities() {
@@ -61,11 +57,11 @@ class SimulationLogic {
   }
 
   decideNodeCount(nodeCount) {
-    return nodeCount === 0 ? d3r.randomInt(this.config.nodeCount.min, this.config.nodeCount.max)() : nodeCount;
+    return nodeCount === 0 ? this.randomInt(this.config.nodeCount.min, this.config.nodeCount.max)() : nodeCount;
   }
 
   createNodes(nodeCount, infectedPercentage) {
-    this.nodes = Array.from({ length: nodeCount }, () => new GraphNode(d3r.randomBernoulli(infectedPercentage)()));
+    this.nodes = Array.from({ length: nodeCount }, () => new GraphNode(this.randomBernoulli(infectedPercentage)()));
 
     const initialInfectedCount = this.nodes.filter(node => node.infected).length;
     this.totalInfectedAmounts[0].y = initialInfectedCount;
@@ -76,13 +72,13 @@ class SimulationLogic {
 
     this.links = [];
     for (let i = 0; i < nodeCount * 2; i++) {
-      const source = d3r.randomInt(0, nodeCount)();
-      let target = d3r.randomInt(0, nodeCount)();
+      const source = this.randomInt(0, nodeCount)();
+      let target = this.randomInt(0, nodeCount)();
 
-      while (source === target) target = d3r.randomInt(0, nodeCount)();
+      while (source === target) target = this.randomInt(0, nodeCount)();
       
       const value = this.nodes[source].infected || this.nodes[target].infected ? 3 : 1;
-      const type = d3r.randomInt(0, this.config.connectionTypes.length)();
+      const type = this.randomInt(0, this.config.connectionTypes.length)();
       
       this.links.push({ source, target, value, type });
     }
@@ -115,6 +111,13 @@ class SimulationLogic {
     return currentIndex - offset;
   }
 
+  tryInfect(node, probability, spreadRate) {
+    if (node.infected) return false;
+  
+    node.infected = this.randomBernoulli(probability * spreadRate)();
+    return node.infected;
+  }
+
   spreadInfection() {
     if (this.nodes.every(node => node.infected)) {
       clearInterval(this.intervalID);
@@ -125,9 +128,9 @@ class SimulationLogic {
     this.links
       .filter(link => link.value === 3)
       .forEach(link => {
-        if (link.source.infected && tryInfect(link.target, this.probabilities[link.type], this.spreadRate))
+        if (link.source.infected && this.tryInfect(link.target, this.probabilities[link.type], this.spreadRate))
           newlyInfected.push(link.target);
-        if (link.target.infected && tryInfect(link.source, this.probabilities[link.type], this.spreadRate))
+        if (link.target.infected && this.tryInfect(link.source, this.probabilities[link.type], this.spreadRate))
           newlyInfected.push(link.source);
       });
 
@@ -551,7 +554,7 @@ class SimulationGraphics {
 }
 
 class SimulationController {
-  constructor(config, simID) {
+  constructor(config, simID, randomFunctionsFactories = {}) {
     this.config = config;
     this.containerElement = document.getElementById(simID);
 
@@ -561,7 +564,7 @@ class SimulationController {
       'simulationUpdated': []
     };
 
-    this.simulation = new SimulationLogic(config);
+    this.simulation = new SimulationLogic(config, randomFunctionsFactories);
     this.simulationGraphics = new SimulationGraphics(this.simulation, config, this.containerElement);
 
     this.simulationGraphics.generateHTML(config);
