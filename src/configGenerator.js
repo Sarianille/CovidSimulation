@@ -221,18 +221,17 @@ new SimulationController(config, "${simID}");
 
       document.body.innerHTML += `
         <div class="simulation-container" id="sim-example"></div>
-      `;
-
-      new this.SimulationController(this.state, "sim-example");
-
-      document.body.innerHTML += `
         <div class="config-display">
           <h3>Simulation Code</h3>
           <textarea class="config-textarea" rows="20" readonly>${embedCode}</textarea>
         </div>
       `;
 
+      new this.SimulationController(this.state, "sim-example");
+
       this.addMetaListeners();
+
+      window.scrollTo(0, 0);
     });
   }
 
