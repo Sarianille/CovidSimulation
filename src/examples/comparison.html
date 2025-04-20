@@ -1,0 +1,365 @@
+<div class="sim-text" style="display: inherit;">
+  <h1>COVID-19 Policy Comparison</h1>
+  <p>Explore the impact of different COVID-19 policy proposals on the spread of the virus.</p>
+</div>
+
+<div class="big-wrapper">
+  <div class="sim-wrapper">
+    <div class="sim-text option">
+      <h3>Proposal 1: Essential Economic Protection</h3>
+      <p>This policy mandates universal masking and implements evening curfews.</p>
+    </div>
+    <div id="sim-essential"></div>
+  </div>
+  <div class="sim-wrapper">
+    <div class="sim-text option">
+      <h3>Proposal 2: Comprehensive Mitigation</h3>
+      <p>This policy combines universal masking, social distancing, limits on gatherings, remote work policies, and evening curfews.</p>
+    </div>
+    <div id="sim-comprehensive"></div>
+  </div>
+  <div class="sim-wrapper">
+    <div class="sim-text option">
+      <h3>Proposal 3: Circuit-Breaker Lockdown</h3>
+      <p>This policy implements a full lockdown with universal masking.</p>
+    </div>
+    <div id="sim-lockdown"></div>
+  </div>
+</div>
+
+<div class="sim-controls global-controls">
+  <button id="start-all-button" class="sim-start-button">Start All Simulations</button>
+  <button id="stop-all-button" class="sim-stop-button" disabled>Stop All Simulations</button>
+</div>
+
+<link rel="stylesheet" href="https://sarianille.github.io/CovidSimulation/bundle/simulation.css">
+<script type="module">
+import { SimulationController } from 'https://sarianille.github.io/CovidSimulation/bundle/simulation.js';
+
+const config = {
+  "showHeader": false,
+  "nodeCount": {
+    "min": 70,
+    "max": 70
+  },
+  "infectedPercentage": {
+    "min": 10,
+    "max": 10,
+    "default": 10
+  },
+  "spreadRates": [
+    {
+      "id": "normal",
+      "label": "Normal",
+      "value": 1
+    }
+  ],
+  "connectionTypes": [
+    {
+      "id": "work",
+      "label": "Work/School",
+      "color": "#ff8c00",
+      "baseProbability": 0.65,
+      "attractionStrength": 0.7
+    },
+    {
+      "id": "social",
+      "label": "Social",
+      "color": "#9932cc",
+      "baseProbability": 0.5,
+      "attractionStrength": 0.6
+    },
+    {
+      "id": "casual",
+      "label": "Casual",
+      "color": "#20b2aa",
+      "baseProbability": 0.1,
+      "attractionStrength": 0.1
+    },
+    {
+      "id": "transit",
+      "label": "Public Transit",
+      "color": "#708090",
+      "baseProbability": 0.2,
+      "attractionStrength": 0.6
+    }
+  ],
+  "nodeColors": {
+    "healthy": "#3cb371",
+    "infected": "#dc143c"
+  },
+  "restrictions": [
+    {
+      "id": "masks",
+      "label": "Universal Masking",
+      "tooltip": "-",
+      "multipliers": {
+        "work": 0.7,
+        "social": 0.6,
+        "casual": 0.5,
+        "transit": 0.6
+      }
+    },
+    {
+      "id": "distance",
+      "label": "Social Distancing",
+      "tooltip": "-",
+      "multipliers": {
+        "work": 0.8,
+        "social": 0.5,
+        "casual": 0.4,
+        "transit": 0.7
+      }
+    },
+    {
+      "id": "remote",
+      "label": "Remote Work",
+      "tooltip": "-",
+      "multipliers": {
+        "work": 0.3,
+        "social": 0.8,
+        "casual": 0.7,
+        "transit": 0.4
+      }
+    },
+    {
+      "id": "gathering",
+      "label": "Gathering Limits",
+      "tooltip": "-",
+      "multipliers": {
+        "work": 0.9,
+        "social": 0.3,
+        "casual": 0.6,
+        "transit": 0.9
+      }
+    },
+    {
+      "id": "curfew",
+      "label": "Curfew",
+      "tooltip": "-",
+      "multipliers": {
+        "work": 0.9,
+        "social": 0.4,
+        "casual": 0.5,
+        "transit": 0.6
+      }
+    },
+    {
+      "id": "lockdown",
+      "label": "Full Lockdown",
+      "tooltip": "-",
+      "multipliers": {
+        "work": 0.2,
+        "social": 0.1,
+        "casual": 0.1,
+        "transit": 0.1
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "label": "Essential Economic Protection",
+      "spreadRate": "normal",
+      "restrictions": [
+        "masks",
+        "curfew"
+      ]
+    },
+    {
+      "label": "Comprehensive Mitigation",
+      "spreadRate": "normal",
+      "restrictions": [
+        "masks",
+        "distance",
+        "remote",
+        "gathering",
+        "curfew"
+      ]
+    },
+    {
+      "label": "Circuit-Breaker Lockdown",
+      "spreadRate": "normal",
+      "restrictions": [
+        "masks",
+        "lockdown"
+      ]
+    }
+  ]
+};
+
+function createSeededRandomFunctions(seed) {
+  // LCG algorithm with ANSI C parameters
+  const seededRandom = function() {
+    seed = (seed * 1103515245 + 12345) % Math.pow(2, 31);
+    return seed / Math.pow(2, 31);
+  };
+
+  const randomInt = function(min, max) {
+    return () => {
+      const value = Math.floor(seededRandom() * (max - min)) + min;
+      return Math.min(value, max - 1);
+    }
+  };
+
+  const randomBernoulli = function(p) {
+    return () => seededRandom() < p;
+  };
+
+  return { randomInt, randomBernoulli };
+}
+
+const seed = Math.floor(Date.now() / 1000);
+
+const sim1 = new SimulationController(config, "sim-essential", createSeededRandomFunctions(seed));
+const sim2 = new SimulationController(config, "sim-comprehensive", createSeededRandomFunctions(seed));
+const sim3 = new SimulationController(config, "sim-lockdown", createSeededRandomFunctions(seed));
+
+function setupSimulation(simulation, scenario) {
+  const scenarioMenu = simulation.containerElement.querySelector(".sim-scenario-menu");
+  scenarioMenu.value = scenario;
+  simulation.updateScenario();
+}
+
+setupSimulation(sim1, "0");
+setupSimulation(sim2, "1");
+setupSimulation(sim3, "2");
+
+const simulations = [sim1, sim2, sim3];
+const startAllButton = document.getElementById("start-all-button");
+const stopAllButton = document.getElementById("stop-all-button");
+
+startAllButton.addEventListener("click", () => {
+  simulations.forEach(sim => {
+    const startButton = sim.startButton;
+    if (startButton && !startButton.disabled) {
+      startButton.click();
+    }
+  });
+  
+  stopAllButton.disabled = false;
+  startAllButton.disabled = true;
+});
+
+stopAllButton.addEventListener("click", () => {
+  simulations.forEach(sim => {
+    const stopButton = sim.stopButton;
+    if (stopButton && !stopButton.disabled) {
+      stopButton.click();
+    }
+  });
+
+  startAllButton.disabled = false;
+  stopAllButton.disabled = true;
+});
+</script>
+<style>
+  .big-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-column-gap: 20px;
+  }
+
+  .sim-wrapper {
+    min-width: 0;
+  }
+
+  .sim-parameters, .sim-text {
+    display: none;
+  }
+
+  .option {
+    display: inherit;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 250px;
+  }
+
+  .global-controls {
+    display: flex;
+    justify-content: center;
+  }
+
+  body {
+    background-color: #0a0e17;
+    color: #b6c2d9;
+    font-family: 'Roboto', 'Arial', sans-serif;
+    background-image: linear-gradient(to bottom, #0a0e17 0%, #121a29 100%);
+  }
+
+  .sim-text {
+    background-color: rgba(16, 24, 44, 0.7);
+    border-radius: 0;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 3px solid #16ffbd;
+  }
+
+  h1 {
+  color: #ffffff;
+  margin-bottom: 30px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(22, 255, 189, 0.5);
+  }
+
+  h3 {
+    color: #16ffbd;
+    margin-top: 0;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .sim-start-button, .sim-stop-button {
+    padding: 12px 28px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    background-color: transparent;
+  }
+
+  .sim-start-button {
+    color: #16ffbd;
+    border: 2px solid #16ffbd;
+  }
+
+  .sim-start-button:hover {
+    background-color: rgba(22, 255, 189, 0.1);
+    box-shadow: 0 0 15px rgba(22, 255, 189, 0.5);
+  }
+
+  .sim-stop-button {
+    color: #ff1654;
+    border: 2px solid #ff1654;
+  }
+
+  .sim-stop-button:hover {
+    background-color: rgba(255, 22, 84, 0.1);
+    box-shadow: 0 0 15px rgba(255, 22, 84, 0.5);
+  }
+
+  .sim-stop-button:disabled, .sim-start-button:disabled {
+    background-color: transparent;
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  svg {
+    background-color: #1e2433;
+  }
+
+  .legend > rect {
+    fill: #1e2433;
+  }
+
+  .legend text {
+    fill: #b6c2d9;
+  }
+</style>
