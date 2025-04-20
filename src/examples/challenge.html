@@ -1,0 +1,329 @@
+<div class="sim-text">
+  <h1>COVID-19 Challenge</h1>
+  <p>Use your limited budget to control the pandemic and protect the population!</p>
+
+  <h3>How to Play</h3>
+  <p>Your goal is to keep infections below 70% of the population for at least 60 days.</p>
+  <p>You have 10 budget points to spend on restrictions.</p>
+</div>
+
+<div class="game-message win">
+  <h2>Congratulations!</h2>
+  <p>You successfully kept the infection rate below 70% for 60 days.</p>
+  <p>Great job!</p>
+  <br>
+  <button class="sim-start-button" onclick="window.location.reload()">Play Again</button>
+</div>
+
+<div class="game-message lose">
+  <h2>Game Over</h2>
+  <p>The infection rate exceeded 70%.</p>
+  <p>Try again with a different strategy!</p>
+  <br>
+  <button class="sim-start-button" onclick="window.location.reload()">Play Again</button>
+</div>
+
+<div id="sim-35b5035e-2903-49cb-852e-81c091e6c9bb"></div>
+<link rel="stylesheet" href="https://sarianille.github.io/CovidSimulation/bundle/simulation.css">
+<script type="module">
+import { SimulationController } from 'https://sarianille.github.io/CovidSimulation/bundle/simulation.js';
+
+const config = {
+  "showHeader": false,
+  "nodeCount": {
+    "min": 50,
+    "max": 120
+  },
+  "infectedPercentage": {
+    "min": 1,
+    "max": 30,
+    "default": 10
+  },
+  "spreadRates": [
+    {
+      "id": "mild",
+      "label": "Mild Variant",
+      "value": 0.6
+    },
+    {
+      "id": "regular",
+      "label": "Standard Variant",
+      "value": 1.1
+    },
+    {
+      "id": "severe",
+      "label": "Severe Variant",
+      "value": 1.8
+    }
+  ],
+  "connectionTypes": [
+    {
+      "id": "home",
+      "label": "Households",
+      "color": "#ff9800",
+      "baseProbability": 0.2,
+      "attractionStrength": 1
+    },
+    {
+      "id": "school",
+      "label": "Schools",
+      "color": "#9c27b0",
+      "baseProbability": 0.15,
+      "attractionStrength": 0.8
+    },
+    {
+      "id": "work",
+      "label": "Workplaces",
+      "color": "#2196f3",
+      "baseProbability": 0.1,
+      "attractionStrength": 0.7
+    },
+    {
+      "id": "social",
+      "label": "Social Venues",
+      "color": "#e91e63",
+      "baseProbability": 0.08,
+      "attractionStrength": 0.5
+    },
+    {
+      "id": "retail",
+      "label": "Retail",
+      "color": "#4caf50",
+      "baseProbability": 0.05,
+      "attractionStrength": 0.3
+    }
+  ],
+  "nodeColors": {
+    "healthy": "#ababab",
+    "infected": "#ff5252"
+  },
+  "restrictions": [
+    {
+      "id": "masks",
+      "label": "Mask Mandate",
+      "tooltip": "Requires masks in public places.",
+      "multipliers": {
+        "home": 0.9,
+        "school": 0.6,
+        "work": 0.6,
+        "social": 0.5,
+        "retail": 0.5
+      }
+    },
+    {
+      "id": "distancing",
+      "label": "Social Distancing",
+      "tooltip": "Keep people 6 feet apart.",
+      "multipliers": {
+        "home": 0.95,
+        "school": 0.7,
+        "work": 0.6,
+        "social": 0.4,
+        "retail": 0.6
+      }
+    },
+    {
+      "id": "testing",
+      "label": "Testing Program",
+      "tooltip": "Regular testing to catch cases early.",
+      "multipliers": {
+        "home": 0.8,
+        "school": 0.3,
+        "work": 0.4,
+        "social": 0.8,
+        "retail": 0.7
+      }
+    },
+    {
+      "id": "isolation",
+      "label": "Isolation Policy",
+      "tooltip": "Infected people must isolate.",
+      "multipliers": {
+        "home": 1.2,
+        "school": 0.3,
+        "work": 0.3,
+        "social": 0.2,
+        "retail": 0.2
+      }
+    },
+    {
+      "id": "remote",
+      "label": "Remote Learning/Work",
+      "tooltip": "Move school and work online.",
+      "multipliers": {
+        "home": 1.3,
+        "school": 0.1,
+        "work": 0.2,
+        "social": 1,
+        "retail": 0.8
+      }
+    },
+    {
+      "id": "limits",
+      "label": "Capacity Limits",
+      "tooltip": "Limit number of people in spaces.",
+      "multipliers": {
+        "home": 1,
+        "school": 0.7,
+        "work": 0.8,
+        "social": 0.3,
+        "retail": 0.5
+      }
+    },
+    {
+      "id": "hygiene",
+      "label": "Enhanced Cleaning",
+      "tooltip": "Better cleaning and hand hygiene.",
+      "multipliers": {
+        "home": 0.9,
+        "school": 0.7,
+        "work": 0.7,
+        "social": 0.8,
+        "retail": 0.8
+      }
+    },
+    {
+      "id": "outdoors",
+      "label": "Outdoor Activities",
+      "tooltip": "Move activities outside when possible.",
+      "multipliers": {
+        "home": 0.95,
+        "school": 0.6,
+        "work": 0.6,
+        "social": 0.3,
+        "retail": 0.9
+      }
+    }
+  ],
+  "scenarios": []
+};
+
+const simulation = new SimulationController(config, "sim-35b5035e-2903-49cb-852e-81c091e6c9bb");
+
+const gameState = {
+  budget: 10,
+  isGameOver: false
+};
+
+const restrictionCosts = {
+  "masks": 2,
+  "distancing": 2,
+  "testing": 3,
+  "isolation": 3,
+  "remote": 4,
+  "limits": 3,
+  "hygiene": 1,
+  "outdoors": 2
+};
+
+function initGame() {
+  addCostLabels();
+  setupEventListeners();
+}
+
+function addCostLabels() {
+  const restrictionItems = document.querySelectorAll('.sim-restriction-item');
+  restrictionItems.forEach(item => {
+    const checkbox = item.querySelector('input[type="checkbox"]');
+    const restrictionId = checkbox.value;
+    const cost = restrictionCosts[restrictionId];
+
+    const costElement = document.createElement('span');
+    costElement.className = 'restriction-cost';
+    costElement.textContent = `(${cost} points)`;
+    item.querySelector('label').appendChild(costElement);
+  });
+}
+
+function setupEventListeners() {
+  // Restriction checkboxes
+  const restrictionItems = document.querySelectorAll('.sim-restriction-item input[type="checkbox"]');
+  restrictionItems.forEach(checkbox => {
+    checkbox.addEventListener('change', handleRestrictionChange);
+  });
+
+  simulation.addEventListener('simulationUpdated', checkGameStatus);
+}
+
+function handleRestrictionChange(event) {
+  if (gameState.isGameOver) return;
+
+  updateBudget();
+  updateAvailableRestrictions();
+}
+
+function updateBudget() {
+  let usedBudget = 0;
+  const restrictionItems = document.querySelectorAll('.sim-restriction-item input[type="checkbox"]');
+
+  restrictionItems.forEach(checkbox => {
+    if (checkbox.checked) {
+      const restrictionId = checkbox.value;
+      usedBudget += restrictionCosts[restrictionId];
+    }
+  });
+
+  gameState.budget = 10 - usedBudget;
+}
+
+function updateAvailableRestrictions() {
+  const restrictionItems = document.querySelectorAll('.sim-restriction-item input[type="checkbox"]');
+
+  restrictionItems.forEach(checkbox => {
+    if (!checkbox.checked) {
+      const restrictionId = checkbox.value;
+      const cost = restrictionCosts[restrictionId];
+
+      checkbox.disabled = cost > gameState.budget;
+    }
+  });
+}
+
+function checkGameStatus(data) {
+  if (gameState.isGameOver) return;
+
+  const infectedPercentage = (data.totalInfected / data.nodesAmount) * 100;
+
+  if (data.tickCount >= 60 && infectedPercentage < 70) {
+    endGame(true);
+  } else if (infectedPercentage >= 70) {
+    endGame(false);
+  }
+}
+
+function endGame(playerWon) {
+  gameState.isGameOver = true;
+  clearInterval(simulation.simulation.intervalID);
+
+  if (playerWon) {
+    document.querySelector('.game-message.win').style.display = 'flex';
+  } else {
+    document.querySelector('.game-message.lose').style.display = 'flex';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initGame);
+</script>
+<style>
+  .sim-scenarios {
+    display: none;
+  }
+
+  .game-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    width: auto;
+    max-width: 400px;
+    min-width: 300px;
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+  }
+</style>
