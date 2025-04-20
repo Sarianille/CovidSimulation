@@ -1,0 +1,348 @@
+<div class="sim-text">
+  <h1>Foot-and-Mouth Disease Simulation</h1>
+  <p>
+    This simulation is not meant to be a realistic representation of the spread of FMD,
+    but a simplified model meant to encourage critical thinking. Feel free to experiment with
+    the parameters and see how they affect the spread of the virus.
+  </p>
+</div>
+
+<div id="sim-dcddeab1-b453-4f35-b47a-6c25b9aef6c4"></div>
+<link rel="stylesheet" href="https://sarianille.github.io/CovidSimulation/bundle/simulation.css">
+<script type="module">
+import { SimulationController } from 'https://sarianille.github.io/CovidSimulation/bundle/simulation.js';
+
+const config = {
+  "showHeader": false,
+  "nodeCount": {
+    "min": 0,
+    "max": 100
+  },
+  "infectedPercentage": {
+    "min": 0,
+    "max": 100,
+    "default": 10
+  },
+  "spreadRates": [
+    {
+      "id": "spreadLow",
+      "label": "Low",
+      "value": 0.3
+    },
+    {
+      "id": "spreadMedium",
+      "label": "Normal",
+      "value": 0.7
+    },
+    {
+      "id": "spreadHigh",
+      "label": "High",
+      "value": 1.2
+    }
+  ],
+  "connectionTypes": [
+    {
+      "id": "animals",
+      "label": "Animal Movement",
+      "color": "#ff6600",
+      "baseProbability": 0.6,
+      "attractionStrength": 0.8
+    },
+    {
+      "id": "humans",
+      "label": "Farm Workers / Vets",
+      "color": "#3399ff",
+      "baseProbability": 0.3,
+      "attractionStrength": 0.5
+    },
+    {
+      "id": "vehicles",
+      "label": "Vehicles / Equipment",
+      "color": "#999900",
+      "baseProbability": 0.2,
+      "attractionStrength": 0.4
+    },
+    {
+      "id": "environmental",
+      "label": "Environmental Spread",
+      "color": "#999999",
+      "baseProbability": 0.1,
+      "attractionStrength": 0.3
+    }
+  ],
+  "nodeColors": {
+    "healthy": "#a0cfa0",
+    "infected": "#e60000"
+  },
+  "restrictions": [
+    {
+      "id": "movementBan",
+      "label": "Ban on livestock movement",
+      "tooltip": "Animal movement almost fully halted",
+      "multipliers": {
+        "animals": 0.05,
+        "humans": 1,
+        "vehicles": 1,
+        "environmental": 1
+      }
+    },
+    {
+      "id": "disinfection",
+      "label": "Vehicle and equipment disinfection",
+      "tooltip": "High effectiveness in limiting spread via contaminated equipment",
+      "multipliers": {
+        "animals": 1,
+        "humans": 1,
+        "vehicles": 0.3,
+        "environmental": 1
+      }
+    },
+    {
+      "id": "farmQuarantine",
+      "label": "Quarantine infected farms",
+      "tooltip": "Movement in and out of infected farms is minimized",
+      "multipliers": {
+        "animals": 1,
+        "humans": 0.2,
+        "vehicles": 0.2,
+        "environmental": 1
+      }
+    },
+    {
+      "id": "culling",
+      "label": "Culling infected animals",
+      "tooltip": "Eliminates infected hosts early",
+      "multipliers": {
+        "animals": 0.1,
+        "humans": 1,
+        "vehicles": 1,
+        "environmental": 0.5
+      }
+    },
+    {
+      "id": "vaccinationRing",
+      "label": "Ring vaccination around infected farms",
+      "tooltip": "Immunize nearby farms before the disease reaches them",
+      "multipliers": {
+        "animals": 0.4,
+        "humans": 0.6,
+        "vehicles": 1,
+        "environmental": 1
+      }
+    },
+    {
+      "id": "biosecurity",
+      "label": "Enhanced biosecurity protocols",
+      "tooltip": "Enforces hygiene and monitoring",
+      "multipliers": {
+        "animals": 0.7,
+        "humans": 0.5,
+        "vehicles": 0.5,
+        "environmental": 0.7
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "label": "None",
+      "spreadRate": "",
+      "restrictions": []
+    },
+    {
+      "label": "Low spread, no control",
+      "spreadRate": "spreadLow",
+      "restrictions": []
+    },
+    {
+      "label": "Low spread, full control",
+      "spreadRate": "spreadLow",
+      "restrictions": [
+        "movementBan",
+        "disinfection",
+        "farmQuarantine",
+        "culling",
+        "vaccinationRing",
+        "biosecurity"
+      ]
+    },
+    {
+      "label": "Normal spread, no control",
+      "spreadRate": "spreadMedium",
+      "restrictions": []
+    },
+    {
+      "label": "Normal spread, partial control",
+      "spreadRate": "spreadMedium",
+      "restrictions": [
+        "disinfection",
+        "farmQuarantine",
+        "culling"
+      ]
+    },
+    {
+      "label": "Normal spread, full control",
+      "spreadRate": "spreadMedium",
+      "restrictions": [
+        "movementBan",
+        "disinfection",
+        "farmQuarantine",
+        "culling",
+        "vaccinationRing",
+        "biosecurity"
+      ]
+    },
+    {
+      "label": "High spread, no control",
+      "spreadRate": "spreadHigh",
+      "restrictions": []
+    },
+    {
+      "label": "High spread, full control",
+      "spreadRate": "spreadHigh",
+      "restrictions": [
+        "movementBan",
+        "disinfection",
+        "farmQuarantine",
+        "culling",
+        "vaccinationRing",
+        "biosecurity"
+      ]
+    }
+  ]
+};
+
+new SimulationController(config, "sim-dcddeab1-b453-4f35-b47a-6c25b9aef6c4");
+</script>
+<style>
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background-color: #f9f5e8;
+    color: #332211;
+    line-height: 1.6;
+  }
+
+  .sim-text, .sim-parameters, svg {
+    border: 1px solid #c5a67a;
+    border-radius: 0;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+  }
+
+  h1 {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 28px;
+    color: #5a3819;
+    border-bottom: 2px double #c5a67a;
+    padding-bottom: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  h3 {
+    font-family: 'Times New Roman', Times, serif;
+    color: #5a3819;
+    border-bottom: 1px solid #c5a67a;
+    padding-bottom: 5px;
+  }
+
+  h4 {
+    color: #8b5e3c;
+  }
+
+  .sim-text p {
+    color: #442211;
+    text-align: justify;
+    background-color: #faf7f0;
+    padding: 15px;
+    border-left: 4px solid #a67f43;
+  }
+
+  .sim-legend {
+    background-color: #f4f0e8;
+    border: 1px solid #c5a67a;
+  }
+
+  .sim-legend-note, .sim-legend-thickness-label {
+    color: #5a3819;
+  }
+
+  .sim-parameters label {
+    color: #5a3819;
+    font-weight: bold;
+  }
+  
+  .sim-restriction-item label {
+    font-weight: normal;
+  }
+
+  .sim-scenario-menu {
+    border: 1px solid #c5a67a;
+  }
+
+  .sim-scenario-menu:focus {
+    border-color: #8b5e3c;
+    box-shadow: 0 0 5px rgba(139, 94, 60, 0.5);
+  }
+
+  .sim-sliders, .sim-modifiers, .sim-restrictions, .sim-scenarios {
+    background-color: #f4f0e8;
+    border: 1px solid #c5a67a;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+  }
+
+  .sim-slider {
+    background: #ddd;
+    accent-color: #8b5e3c;
+    appearance: auto;
+  }
+
+  .sim-slider::-webkit-slider-thumb, .sim-slider::-moz-range-thumb {
+    appearance: none;
+  }
+
+  .sim-controls button {
+    background-color: #8b5e3c;
+    padding: 10px 20px;
+    font-family: 'Georgia', serif;
+  }
+
+  .sim-controls button:hover {
+    background-color: #a67f43;
+  }
+
+  .sim-controls button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+
+  .info-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    color: #8b5e3c;
+    font-size: 12px;
+    border: 1px solid #8b5e3c;
+    border-radius: 50%;
+    margin-right: 5px;
+    cursor: help;
+  }
+
+  .info-icon:hover {
+    color: #8b5e3c;
+  }
+
+  [data-sim-tooltip] {
+    font-weight: normal;
+  }
+
+  [data-sim-tooltip]:hover::before {
+    background-color: #5a3819;
+  }
+
+  [data-sim-tooltip]:hover::after {
+    border-color: #5a3819 transparent transparent transparent;
+  }
+</style>
