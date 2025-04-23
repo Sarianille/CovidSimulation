@@ -8,13 +8,42 @@
   </head>
   <script src="https://d3js.org/d3.v7.js"></script>
   <body>
+    <div class="sim-text">
+      <h1>Interactive pandemic simulation to encourage critical thinking</h1>
+      <p>Explore the spread of diseases through an interactive simulation tool that allows you to model
+        different strategies and observe their effects.</p>
+      <h2>About This Project</h2>
+      <p>The project is designed to promote critical thinking about pandemics and the spread of diseases
+        rather than predict real world outcomes. This tool allows regular people such as journalists to
+        create simplified epidemiological models that users can easily access and use them to experiment
+        with different scenarios and assumptions.</p>
+    </div>
+    <div class="sim-text launch">
+      <h2>Get Started</h2>
+      <p>Click the button below to launch the configuration generator. You can then create your own pandemic
+        simulation by customizing population parameters, disease parameters, intervention strategies, and scenarios.</p>
+
+      <button id="launch-button" class="submit-button">Launch Configuration Generator</button>
+    </div>
+
+    <div class="sim-text examples">
+      <h2>Examples</h2>
+      <p>Feel free to explore these pre-configured simulations. Each example demonstrates a different use-case for which
+        the simulation can be used.</p>
+      </p>
+      <ul>
+        <li><a href="examples/challenge.html">COVID-19 Challenge</a> - Test your skills by balancing public health
+          with economic considerations.</li>
+        <li><a href="examples/comparison.html">Comparison of Proposals</a> - Compare different strategies side-by-side.</li>
+        <li><a href="examples/fmd.html">Foot-and-Mouth Disease Simulation</a> - Experiment with the versality of the simulation framework by simulating FMD.</li>
+      </ul>
   </body>
   <script type="module">
     import { SimulationController } from './simulation.js';
     import { defaultConfig } from './defaultConfig.js';
     import { ConfigGenerator } from './configGenerator.js';
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('launch-button').addEventListener('click', () => {
       const setup = new ConfigGenerator(defaultConfig, SimulationController);
     });
   </script>

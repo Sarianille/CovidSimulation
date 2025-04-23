@@ -57,3 +57,25 @@ select:focus {
   border-color: #7cb0e3;
   box-shadow: 0 0 0 3px rgba(124, 176, 227, 0.1);
 }
+
+.examples ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.examples li {
+  margin-bottom: 10px;
+}
+
+.examples a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+.examples a:hover {
+  text-decoration: underline;
+}
+
+#launch-button {
+  margin: 0 auto;
+}
