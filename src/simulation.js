@@ -31,6 +31,7 @@ class SimulationLogic {
     this.probabilities = [...this.baseProbabilities]; // Current active probabilities
     this.spreadRate = 1;
 
+    // dependency injection
     this.randomInt = randomFunctionsFactories.randomInt || d3r.randomInt;
     this.randomBernoulli = randomFunctionsFactories.randomBernoulli || d3r.randomBernoulli;
   }
@@ -57,7 +58,7 @@ class SimulationLogic {
   }
 
   decideNodeCount(nodeCount) {
-    return nodeCount === 0 ? this.randomInt(this.config.nodeCount.min, this.config.nodeCount.max)() : nodeCount;
+    return nodeCount === 0 ? this.randomInt(this.config.nodeCount.min + 1, this.config.nodeCount.max)() : nodeCount;
   }
 
   createNodes(nodeCount, infectedPercentage) {
