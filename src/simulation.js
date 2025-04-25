@@ -207,6 +207,8 @@ class SimulationGraphics {
       .attr("style", d => `stroke: ${this.linkColor[d.type]};`);
 
     const node = svg.append("g")
+      .attr("stroke", "white")
+      .attr("stroke-width", 1.5)
       .selectAll("circle")
       .data(nodes)
       .join("circle")
