@@ -378,7 +378,7 @@ class SimulationGraphics {
   updateSimulation() {
     const newInfections = this.simulationLogic.spreadInfection();
     if (newInfections === -1) return;
-    else if (newInfections > 0) this.simulation.restart();
+    else this.simulation.restart();
   }
 
   generateHTML(config) {
