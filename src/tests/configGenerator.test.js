@@ -177,6 +177,7 @@ const testHelpers = {
   },
 
   testAddButtonClick: (context, buttonId, stateProperty, additionalAssertions = null) => {
+    // Use context for better readability
     const {configGenerator, updateStateSpy, refreshSpy } = context;
     const initialItemsAmount = configGenerator.state[stateProperty].length;
 
@@ -373,6 +374,7 @@ describe('ConfigGenerator', () => {
       const remainingItems = document.querySelectorAll('.connection-type-item');
       expect(remainingItems).toHaveLength(2);
 
+      // Check that the third item was removed
       const remainingIds = Array.from(remainingItems).map(item => 
         item.querySelector('.type-id').value
       );
@@ -381,6 +383,8 @@ describe('ConfigGenerator', () => {
       expect(remainingIds).toContain(secondItemId);
 
       testHelpers.assertMethodsCalled(updateStateSpy, refreshSpy);
+
+      // Check that nothing else was removed
       expect(document.querySelectorAll('.connection-type-item')).toHaveLength(2);
       expect(document.querySelectorAll('.spread-rate-item')).toHaveLength(2);
       expect(document.querySelectorAll('.restriction-item')).toHaveLength(2);

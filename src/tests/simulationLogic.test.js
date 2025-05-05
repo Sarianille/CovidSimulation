@@ -68,10 +68,12 @@ const createTestConfig = () => ({
 
 const testHelpers = {
   createTestNodes: (countOrPattern, infectionStatus = false) => {
+    // Create nodes from array of booleans
     if (Array.isArray(countOrPattern)) {
       return countOrPattern.map(infected => ({ infected }));
     }
 
+    // Create a certain number of nodes with the same infection status
     return Array.from({ length: countOrPattern }, () => ({ infected: infectionStatus }));
   },
 
@@ -163,7 +165,7 @@ describe('SimulationLogic', () => {
       let callCount = 0;
       randomBernoulli.mockImplementation(() => () => {
         callCount++;
-        return callCount % 2 === 0;
+        return callCount % 2 === 0; // Every other node is infected
       });
 
       simulationLogic.createNodes(10, 0.5);
@@ -183,6 +185,7 @@ describe('SimulationLogic', () => {
       randomInt.mockImplementation((min, max) => () => {
         callCount++;
         
+        // Ensure that the source and target are different nodes
         if (callCount % 3 === 1) return callCount % 5; // source
         if (callCount % 3 === 2) return (callCount + 1) % 5; // target
         return 0; // type
@@ -199,7 +202,8 @@ describe('SimulationLogic', () => {
       let callCount = 0;
       randomInt.mockImplementation((min, max) => () => {
         callCount++;
-        return callCount <3 ? 0 : callCount % 3;
+        // Make source and target the same at first, then different
+        return callCount < 3 ? 0 : callCount % 3;
       });
 
       simulationLogic.createLinks(3);
@@ -219,12 +223,14 @@ describe('SimulationLogic', () => {
 
       let callCount = 0;
       randomInt.mockImplementation((min, max) => () => {
+        // Create links 0<->1, 1<->2
         const values = [0, 1, 0, 1, 2, 1];
         return values[callCount++ % values.length];
       });
 
       simulationLogic.createLinks(3);
 
+      // Switching between infected and healthy links
       const expected = [3, 1, 3, 1, 3, 1];
       simulationLogic.links.forEach((link, index) => {
         expect(link.value).toBe(expected[index]);
@@ -303,8 +309,10 @@ describe('SimulationLogic', () => {
 
       expect(newlyInfected).toBe(2);
       expect(simulationLogic.nodes[0].infected).toBe(true);
+      // Spread to neighbours
       expect(simulationLogic.nodes[1].infected).toBe(true);
       expect(simulationLogic.nodes[2].infected).toBe(true);
+      // No spread to neighbours of neighbours
       expect(simulationLogic.nodes[3].infected).toBe(false);
       expect(simulationLogic.nodes[4].infected).toBe(false);
     });
@@ -321,7 +329,9 @@ describe('SimulationLogic', () => {
       const newlyInfected = simulationLogic.spreadInfection();
 
       expect(newlyInfected).toBe(2);
+      // Spread from target to source
       expect(simulationLogic.nodes[0].infected).toBe(true);
+      // Spread from source to target
       expect(simulationLogic.nodes[2].infected).toBe(true);
     });
 

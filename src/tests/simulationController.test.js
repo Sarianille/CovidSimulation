@@ -138,11 +138,13 @@ describe('SimulationController', () => {
 
       simulationController.triggerEvent('simulationStarted', eventData);
 
+      // Check that the error didn't get propagated
       expect(triggerEventSpy).toHaveReturned();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Error executing event listener for simulationStarted:', 
         new Error('Test error')
       );
+      // Check that the other callback was still called
       expect(callback).toHaveBeenCalledWith(eventData);
     });
   });
@@ -218,6 +220,7 @@ describe('SimulationController', () => {
     it('should update the simulation on each tick', () => {
       simulationController.startButton.click();
 
+      // Simulate one tick of the simulation
       const intervalCallback = global.setInterval.mock.calls[0][0];
       intervalCallback();
 
@@ -250,8 +253,10 @@ describe('SimulationController', () => {
     });
 
     it('should handle scenario with no spread rate', () => {
+      // Set it to a scenario with a spread rate first
       simulationController.scenarioMenu.value = '2';
       simulationController.updateScenario();
+      // Then set it to a scenario with no spread rate
       simulationController.scenarioMenu.value = '0';
       simulationController.updateScenario();
 
@@ -260,8 +265,10 @@ describe('SimulationController', () => {
     });
 
     it('should handle scenario with no restrictions', () => {
+      // Set it to a scenario with restrictions first
       simulationController.scenarioMenu.value = '2';
       simulationController.updateScenario();
+      // Then set it to a scenario with no restrictions
       simulationController.scenarioMenu.value = '0';
       simulationController.updateScenario();
 
