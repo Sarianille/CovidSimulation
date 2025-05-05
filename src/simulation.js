@@ -755,3 +755,4 @@ class SimulationController {
 }
 
 export { SimulationController };
+export { SimulationLogic };
