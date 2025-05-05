@@ -313,7 +313,7 @@ class SimulationGraphics {
    * @method
    * @param {Number} nodeCount - The number of nodes to create.
    * @param {Number} infectedPercentage - The percentage of nodes that should be infected.
-   * @returns 
+   * @returns {Element} - The SVG element containing the simulation.
    */
   drawSimulation(nodeCount, infectedPercentage) {
     // Prepare the logic and data for the visualization
@@ -420,7 +420,7 @@ class SimulationGraphics {
    * @param {Array} infectedAmounts - Array of newly infected amounts over time.
    * @param {Array} totalInfectedAmounts - Array of total infected amounts over time.
    * @param {Element} chartContainer - The HTML element to contain the chart.
-   * @returns 
+   * @returns {Element} - The SVG element containing the chart.
    */
   static drawChart(infectedAmounts, totalInfectedAmounts, chartContainer) {
     const width = 800;
@@ -777,7 +777,7 @@ class SimulationGraphics {
 }
 
 /**
- * Represents the controller for the simulation.
+ * Ties together the simulation logic and graphics, and manages the user input.
  * @class
  */
 class SimulationController {
