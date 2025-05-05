@@ -16,20 +16,20 @@ class GraphNode {
 }
 
 class SimulationLogic {
-  infectedAmounts = [{ x: 0, y: 0 }];
-  totalInfectedAmounts = [{ x: 0, y: 0 }];
-  tickCount = 0;
-
   constructor(config, randomFunctionsFactories = {}) {
+    this.infectedAmounts = [{ x: 0, y: 0 }];
+    this.totalInfectedAmounts = [{ x: 0, y: 0 }];
+    this.tickCount = 0;
+
     this.nodes = [];
     this.links = [];
 
     this.intervalID = null;
-    this.config = config;
+    this.spreadRate = 1;
 
+    this.config = config;
     this.baseProbabilities = config.connectionTypes.map(type => type.baseProbability);
     this.probabilities = [...this.baseProbabilities]; // Current active probabilities
-    this.spreadRate = 1;
 
     // dependency injection
     this.randomInt = randomFunctionsFactories.randomInt || d3r.randomInt;
