@@ -1,4 +1,13 @@
+/**
+ * Generates and manages the configuration of a simulation.
+ * @class
+ */
 export class ConfigGenerator {
+  /**
+   * @constructor
+   * @param {Object} defaultConfig - The default configuration for the simulation.
+   * @param {Function} SimulationController - The SimulationController class to be used for creating the simulation.
+   */
   constructor(defaultConfig, SimulationController) {
     this.state = defaultConfig;
     this.SimulationController = SimulationController;
@@ -8,7 +17,12 @@ export class ConfigGenerator {
     this.addEventListeners();
   }
 
+  /**
+   * Initializes the page for the configuration generator.
+   * @method
+   */
   initializeSetupPage() {
+    // Clear the body content to avoid leaving any previous content
     document.body.innerHTML = '';
     
     this.setupPage = document.createElement('div');
@@ -19,6 +33,10 @@ export class ConfigGenerator {
     document.body.appendChild(this.setupPage);
   }
 
+  /**
+   * Renders the HTML structure for the page.
+   * @method
+   */
   renderSetupPage() {
     this.setupPage.innerHTML = `
       <h1>Simulation Configuration</h1>
@@ -118,6 +136,10 @@ export class ConfigGenerator {
     `;
   }
 
+  /**
+   * Extracts the current state of the configuration from the HTML elements.
+   * @method
+   */
   updateState() {
     this.state.showHeader = document.getElementById('showHeader').checked;
     this.state.nodeCount = {
@@ -140,6 +162,10 @@ export class ConfigGenerator {
     this.state.scenarios = this.collectScenarios();
   }
 
+  /**
+   * Adds event listeners to the buttons on the configuration page.
+   * @method
+   */
   addEventListeners() {
     document.getElementById('addConnectionType').addEventListener('click', () => {
       this.updateState();
@@ -204,6 +230,7 @@ export class ConfigGenerator {
       this.updateState();
       document.body.innerHTML = '';
 
+      // Generate a UUID so that there are no conflicts with other simulations
       const simID = "sim-" + crypto.randomUUID();
       const embedCode = `
 <div id="${simID}"></div>
@@ -231,10 +258,15 @@ new SimulationController(config, "${simID}");
 
       this.addMetaListeners();
 
+      // Ensure the user starts at the top of the page
       window.scrollTo(0, 0);
     });
   }
 
+  /**
+   * Adds event listeners to the meta buttons (back and copy).
+   * @method
+   */
   addMetaListeners() {
     document.getElementById('back-button').addEventListener('click', () => {
       this.initializeSetupPage();
@@ -250,6 +282,10 @@ new SimulationController(config, "${simID}");
     });
   }
 
+  /**
+   * Adds meta buttons (back and copy) to the page after the simulation is created.
+   * @method
+   */
   addMetaButtons() {
     document.body.innerHTML += `
       <div class="meta-buttons">
@@ -258,14 +294,22 @@ new SimulationController(config, "${simID}");
       </div>`;
   }
 
+  /**
+   * Refreshes sections of the page that depend on other data.
+   * @method
+   */
   refreshDynamicSections() {
-    // Only refresh sections that depend on other data
     document.getElementById('connectionTypes').innerHTML = this.renderConnectionTypes();
     document.getElementById('spreadRates').innerHTML = this.renderSpreadRates();
     document.getElementById('restrictions').innerHTML = this.renderRestrictions();
     document.getElementById('scenarios').innerHTML = this.renderScenarios();
   }
 
+  /**
+   * Collects the connection types from the HTML elements and returns them as an array of objects.
+   * @method
+   * @returns {Array} - An array of connection type objects.
+   */
   collectConnectionTypes() {
     const types = [];
     document.querySelectorAll('.connection-type-item').forEach(item => {
@@ -280,6 +324,11 @@ new SimulationController(config, "${simID}");
     return types;
   }
 
+  /**
+   * Collects the spread rates from the HTML elements and returns them as an array of objects.
+   * @method
+   * @returns {Array} - An array of spread rate objects.
+   */
   collectSpreadRates() {
     const rates = [];
     document.querySelectorAll('.spread-rate-item').forEach(item => {
@@ -292,6 +341,11 @@ new SimulationController(config, "${simID}");
     return rates;
   }
 
+  /**
+   * Collects the restrictions from the HTML elements and returns them as an array of objects.
+   * @method
+   * @returns {Array} - An array of restriction objects.
+   */
   collectRestrictions() {
     const restrictions = [];
     document.querySelectorAll('.restriction-item').forEach(item => {
@@ -310,6 +364,11 @@ new SimulationController(config, "${simID}");
     return restrictions;
   }
 
+  /**
+   * Collects the scenarios from the HTML elements and returns them as an array of objects.
+   * @method
+   * @returns {Array} - An array of scenario objects.
+   */
   collectScenarios() {
     const scenarios = [];
     document.querySelectorAll('.scenario-item').forEach(item => {
@@ -326,6 +385,11 @@ new SimulationController(config, "${simID}");
     return scenarios;
   }
 
+  /**
+   * Renders the node configuration section of the page.
+   * @method
+   * @returns {String} - HTML string for the node configuration section.
+   */
   renderNodeConfig() {
     return `
       <div class="section-group">
@@ -361,6 +425,11 @@ new SimulationController(config, "${simID}");
     `;
   }
 
+  /**
+   * Renders the node colors section of the page.
+   * @method
+   * @returns {String} - HTML string for the node colors section.
+   */
   renderColors() {
     return `
       <div class="section-group">
@@ -377,6 +446,11 @@ new SimulationController(config, "${simID}");
     `;
   }
 
+  /**
+   * Renders the connection types section of the page.
+   * @method
+   * @returns {String} - HTML string for the connection types section.
+   */
   renderConnectionTypes() {
     return this.state.connectionTypes.map(type => `
       <div class="connection-type-item">
@@ -390,6 +464,11 @@ new SimulationController(config, "${simID}");
     `).join('');
   }
 
+  /**
+   * Renders the spread rates section of the page.
+   * @method
+   * @returns {String} - HTML string for the spread rates section.
+   */
   renderSpreadRates() {
     return this.state.spreadRates.map(rate => `
       <div class="spread-rate-item">
@@ -401,6 +480,11 @@ new SimulationController(config, "${simID}");
     `).join('');
   }
 
+  /**
+   * Renders the restrictions section of the page.
+   * @method
+   * @returns {String} - HTML string for the restrictions section.
+   */
   renderRestrictions() {
     return this.state.restrictions.map(restriction => `
       <div class="restriction-item">
@@ -432,6 +516,11 @@ new SimulationController(config, "${simID}");
     `).join('');
   }
 
+  /**
+   * Renders the scenarios section of the page.
+   * @method
+   * @returns {String} - HTML string for the scenarios section.
+   */
   renderScenarios() {
     return this.state.scenarios.map(scenario => `
       <div class="scenario-item">
