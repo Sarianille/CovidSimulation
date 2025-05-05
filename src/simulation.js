@@ -8,15 +8,32 @@ import * as d3sc from "d3-scale";
 import * as d3a from "d3-axis";
 import * as d3sh from "d3-shape";
 
-
+/**
+ * Represents a node in the graph.
+ * @class
+ */
 class GraphNode {
+  /**
+   * @constructor
+   * @param {Boolean} infected - Indicates if the node is infected.
+   */
   constructor(infected) {
     this.infected = infected;
   }
 }
 
+/**
+ * Represents the logic of the simulation.
+ * @class
+ */
 class SimulationLogic {
+  /**
+   * @constructor
+   * @param {Object} config - Configuration object containing simulation parameters.
+   * @param {Object} randomFunctionsFactories - Object containing custom random functions factories.
+   */
   constructor(config, randomFunctionsFactories = {}) {
+    // Helper values for proper chart rendering
     this.infectedAmounts = [{ x: 0, y: 0 }];
     this.totalInfectedAmounts = [{ x: 0, y: 0 }];
     this.tickCount = 0;
@@ -31,16 +48,26 @@ class SimulationLogic {
     this.baseProbabilities = config.connectionTypes.map(type => type.baseProbability);
     this.probabilities = [...this.baseProbabilities]; // Current active probabilities
 
-    // dependency injection
+    // Set functions via dependency injection
     this.randomInt = randomFunctionsFactories.randomInt || d3r.randomInt;
     this.randomBernoulli = randomFunctionsFactories.randomBernoulli || d3r.randomBernoulli;
   }
 
+  /**
+   * Resets the probabilities to their base values.
+   * @method
+   */
   resetProbabilities() {
     this.probabilities = [...this.baseProbabilities];
   }
 
+  /**
+   * Applies the active restrictions to the connection probabilities.
+   * @method
+   * @param {Array} activeRestrictionIds - Array of active restriction IDs.
+   */
   applyRestrictions(activeRestrictionIds) {
+    // Reset probabilities first to avoid cumulative effects from multiple calls
     this.resetProbabilities();
 
     const activeRestrictions = this.config.restrictions.filter(
@@ -57,18 +84,39 @@ class SimulationLogic {
     });
   }
 
+  /**
+   * Decides the number of nodes to create based on the provided node count.
+   * If the node count is 0, a random number of nodes between the min + 1 and max values is generated.
+   * @method
+   * @param {Number} nodeCount - The number of nodes to create specified by the user.
+   * @returns {Number} - The actual number of nodes to create.
+   */
   decideNodeCount(nodeCount) {
+    // Use min + 1 to avoid 0 nodes
     return nodeCount === 0 ? this.randomInt(this.config.nodeCount.min + 1, this.config.nodeCount.max)() : nodeCount;
   }
 
+  /**
+   * Creates nodes for the simulation.
+   * @method
+   * @param {Number} nodeCount - The number of nodes to create.
+   * @param {Number} infectedPercentage - The percentage of nodes that should be infected.
+   */
   createNodes(nodeCount, infectedPercentage) {
     this.nodes = Array.from({ length: nodeCount }, () => new GraphNode(this.randomBernoulli(infectedPercentage)()));
 
+    // Set the initial infected count for the chart
     const initialInfectedCount = this.nodes.filter(node => node.infected).length;
     this.totalInfectedAmounts[0].y = initialInfectedCount;
   }
 
+  /**
+   * Creates links between nodes in the simulation.
+   * @method
+   * @param {Number} nodeCount - The number of nodes in the simulation.
+   */
   createLinks(nodeCount) {
+    // No links can be created if there are less than 2 nodes
     if (nodeCount < 2) return;
 
     this.links = [];
@@ -76,6 +124,7 @@ class SimulationLogic {
       const source = this.randomInt(0, nodeCount)();
       let target = this.randomInt(0, nodeCount)();
 
+      // Ensure source and target are not the same
       while (source === target) target = this.randomInt(0, nodeCount)();
       
       const value = this.nodes[source].infected || this.nodes[target].infected ? 3 : 1;
@@ -86,17 +135,29 @@ class SimulationLogic {
     this.deleteUnlinkedNodes();
   }
 
+  /**
+   * Deletes nodes that are not linked to any other nodes.
+   * @method
+   */
   deleteUnlinkedNodes() {
     const unlinkedIndexes = new Set(this.nodes.map((_, i) => i));
+
+    // Remove indexes of linked nodes
     this.links.forEach(link => {
       unlinkedIndexes.delete(link.source);
       unlinkedIndexes.delete(link.target);
     });
 
+    // Reverse the array to avoid index shifting issues
     Array.from(unlinkedIndexes).reverse().forEach(idx => this.nodes.splice(idx, 1));
     this.reIndexLinkNodes(Array.from(unlinkedIndexes));
   }
 
+  /**
+   * Re-indexes the links to account for deleted nodes.
+   * @method
+   * @param {Array} unlinkedIndexes - Array of indexes of deleted nodes.
+   */
   reIndexLinkNodes(unlinkedIndexes) {
     this.links.forEach(link => {
       link.source = this.reIndexNode(link.source, unlinkedIndexes);
@@ -104,6 +165,13 @@ class SimulationLogic {
     });
   }
 
+  /**
+   * Re-indexes a node's index based on the deleted nodes.
+   * @method
+   * @param {Number} currentIndex - The current index of the node.
+   * @param {Array} unlinkedIndexes - Array of indexes of deleted nodes.
+   * @returns {Number} - The new index of the node after re-indexing.
+   */
   reIndexNode(currentIndex, unlinkedIndexes) {
     let offset = 0;
     unlinkedIndexes.forEach(idx => {
@@ -112,6 +180,14 @@ class SimulationLogic {
     return currentIndex - offset;
   }
 
+  /**
+   * Attempts to infect a node based on the given probability and spread rate.
+   * @method
+   * @param {*} node - The node to infect.
+   * @param {Number} probability - The probability of infection.
+   * @param {Number} spreadRate - The spread rate of the infection.
+   * @returns {Boolean} - True if the node was infected, false otherwise.
+   */
   tryInfect(node, probability, spreadRate) {
     if (node.infected) return false;
   
@@ -119,13 +195,20 @@ class SimulationLogic {
     return node.infected;
   }
 
+  /**
+   * Spreads the infection through the network graph.
+   * @returns {Number} - The number of newly infected nodes or -1 if all nodes are infected.
+   */
   spreadInfection() {
+    // Stop the simulation if all nodes are infected
     if (this.nodes.every(node => node.infected)) {
       clearInterval(this.intervalID);
       return -1;
     }
 
     const newlyInfected = [];
+
+    // Filter links before iterating to avoid including links of newly infected nodes
     this.links
       .filter(link => link.value === 3)
       .forEach(link => {
@@ -135,6 +218,7 @@ class SimulationLogic {
           newlyInfected.push(link.source);
       });
 
+    // Update links of newly infected nodes
     this.links
       .filter(link => link.value !== 3)
       .forEach(link => {
@@ -147,6 +231,11 @@ class SimulationLogic {
     return newlyInfected.length;
   }
 
+  /**
+   * Updates the chart data.
+   * @method
+   * @param {Number} newInfectionsCount - The number of newly infected nodes.
+   */
   updateInfectedAmounts(newInfectionsCount) {
     this.tickCount++;
 
@@ -161,7 +250,12 @@ class SimulationLogic {
     });
   }
 
+  /**
+   * Resets the chart data to its initial state.
+   * @method
+   */
   resetChartData() {
+    // Get the new initial infected count
     const initialInfectedCount = this.nodes.filter(node => node.infected).length;
 
     this.infectedAmounts = [{ x: 0, y: 0 }];
@@ -169,6 +263,12 @@ class SimulationLogic {
     this.tickCount = 0;
   }
 
+  /**
+   * Initializes the simulation.
+   * @method
+   * @param {Number} nodeCount - The number of nodes to create.
+   * @param {Number} infectedPercentage - The percentage of nodes that should be infected.
+   */
   initializeSimulation(nodeCount, infectedPercentage) {
     const actualNodeCount = this.decideNodeCount(nodeCount);
     this.createNodes(actualNodeCount, infectedPercentage);
@@ -177,12 +277,30 @@ class SimulationLogic {
   }
 }
 
+/* 
+ * A lot of the code in SimulationGraphics is based on the following examples:
+ * https://observablehq.com/@d3/force-directed-graph/2?intent=fork
+ * https://observablehq.com/@d3/inline-labels/2?intent=fork
+ * I have made some modifications to the original code and added some
+ * of my own code to make the simulation and chart work as intended.
+ */
+
+ /**
+  * Represents the graphics of the simulation, chart, and UI.
+  * @class
+  */
 class SimulationGraphics {
+  /**
+   * @constructor
+   * @param {SimulationLogic} simulationLogic - The logic of the simulation.
+   * @param {Object} config - Configuration object containing simulation parameters.
+   * @param {Element} containerElement - The HTML element to contain the simulation.
+   */
   constructor(simulationLogic, config, containerElement) {
-    this.simulationLogic = simulationLogic;
     this.width = 800;
     this.height = 500;
 
+    this.simulationLogic = simulationLogic;
     this.config = config;
     this.containerElement = containerElement
 
@@ -190,16 +308,26 @@ class SimulationGraphics {
     this.linkColor = this.config.connectionTypes.map(type => type.color);
   }
 
+  /**
+   * Draws the simulation visualization.
+   * @method
+   * @param {Number} nodeCount - The number of nodes to create.
+   * @param {Number} infectedPercentage - The percentage of nodes that should be infected.
+   * @returns 
+   */
   drawSimulation(nodeCount, infectedPercentage) {
+    // Prepare the logic and data for the visualization
     this.simulationLogic.initializeSimulation(nodeCount, infectedPercentage);
     const { nodes, links } = this.simulationLogic;
 
+    // Create the SVG container
     const svg = d3sel.create("svg")
       .attr("width", this.width)
       .attr("height", this.height)
       .attr("viewBox", [0, 0, this.width, this.height])
       .attr("style", "max-width: 100%; height: auto;");
 
+    // Add a line for each link
     const link = svg.append("g")
       .selectAll("line")
       .data(links)
@@ -207,6 +335,7 @@ class SimulationGraphics {
       .attr("stroke-width", d => d.value)
       .attr("style", d => `stroke: ${this.linkColor[d.type]};`);
 
+    // Add a circle for each node
     const node = svg.append("g")
       .attr("stroke", "white")
       .attr("stroke-width", 1.5)
@@ -221,7 +350,7 @@ class SimulationGraphics {
         .on("end", event => this.dragended(event))
       );
 
-    // Initialize the D3 force simulation
+    // Initialize the D3 force simulation with several forces
     this.simulation = d3f.forceSimulation(nodes)
       .force("link", d3f.forceLink(links).id(d => d.index).strength(d => {
         return this.config.connectionTypes[d.type].attractionStrength;
@@ -233,6 +362,12 @@ class SimulationGraphics {
     return svg.node();
   }
 
+  /**
+   * Updates the positions of the links and nodes during the simulation.
+   * @method
+   * @param {*} link - The link elements in the SVG.
+   * @param {*} node - The node elements in the SVG.
+   */
   ticked(link, node) {
     link
       .attr("x1", d => d.source.x ?? 0)
@@ -246,23 +381,47 @@ class SimulationGraphics {
       .attr("fill", d => this.nodeColor[+d.infected]);
   }
 
+  /**
+   * Handles the drag start event.
+   * @method
+   * @param {*} event - The drag event.
+   */
   dragstarted(event) {
     if (!event.active) this.simulation.alphaTarget(0.3).restart();
     event.subject.fx = event.subject.x;
     event.subject.fy = event.subject.y;
   }
 
+  /**
+   * Handles the drag event.
+   * @method
+   * @param {*} event - The drag event.
+   */
   dragged(event) {
     event.subject.fx = event.x;
     event.subject.fy = event.y;
   }
 
+  /**
+   * Handles the drag end event.
+   * @method
+   * @param {*} event - The drag event.
+   */
   dragended(event) {
     if (!event.active) this.simulation.alphaTarget(0);
     event.subject.fx = null;
     event.subject.fy = null;
   }
 
+  /**
+   * Draws the chart visualization.
+   * @static
+   * @method
+   * @param {Array} infectedAmounts - Array of newly infected amounts over time.
+   * @param {Array} totalInfectedAmounts - Array of total infected amounts over time.
+   * @param {Element} chartContainer - The HTML element to contain the chart.
+   * @returns 
+   */
   static drawChart(infectedAmounts, totalInfectedAmounts, chartContainer) {
     const width = 800;
     const height = 300;
@@ -271,6 +430,7 @@ class SimulationGraphics {
     const marginBottom = 30;
     const marginLeft = 30;
 
+    // Calculate the maximum x and y for the chart so it doesn't overflow
     const maxX = Math.max(
       ...infectedAmounts.map(d => d.x),
       ...totalInfectedAmounts.map(d => d.x)
@@ -281,6 +441,7 @@ class SimulationGraphics {
       ...totalInfectedAmounts.map(d => d.y)
     )
 
+    // Create the horizontal and vertical scales
     const x = d3sc.scaleLinear()
       .domain([0, Math.max(100, maxX)])
       .range([marginLeft, width - marginRight]);
@@ -289,12 +450,14 @@ class SimulationGraphics {
       .domain([0, Math.max(50, maxY)])
       .range([height - marginBottom, marginTop]);
 
+    // Create the SVG container
     const svg = d3sel.create("svg")
       .attr("width", width)
       .attr("height", height)
       .attr("viewBox", [0, 0, width, height])
       .attr("style", "max-width: 100%; height: auto; font: 10px sans-serif;");
 
+    // Add the x and y axes
     svg.append("g")
       .attr("transform", `translate(0,${height - marginBottom})`)
       .call(d3a.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
@@ -315,26 +478,31 @@ class SimulationGraphics {
       .attr("text-anchor", "start")
       .text("Infections");
 
+    // Create the line generator for newly infected nodes
     const newlyInfectedLine = d3sh.line()
       .x(d => x(d.x))
       .y(d => y(d.y));
 
+    // Add the line for newly infected nodes
     svg.append("path")
       .attr("fill", "none")
       .attr("stroke", "red")
       .attr("stroke-width", 1.5)
       .attr("d", newlyInfectedLine(infectedAmounts));
 
+    // Create the line generator for total infected nodes
     const totalInfectedLine = d3sh.line()
       .x(d => x(d.x))
       .y(d => y(d.y));
 
+    // Add the line for total infected nodes
     svg.append("path")
       .attr("fill", "none")
       .attr("stroke", "blue")
       .attr("stroke-width", 1.5)
       .attr("d", totalInfectedLine(totalInfectedAmounts));
 
+    // Create the legend container
     const legendGroup = svg.append("g")
       .attr("class", "legend")
       .attr("transform", `translate(${width - marginRight - 100}, ${marginTop})`);
@@ -369,18 +537,28 @@ class SimulationGraphics {
       .attr("text-anchor", "start")
       .text(d => d.label);
 
+    // Clear the previous chart and append the new one
     chartContainer.innerHTML = "";
     chartContainer.appendChild(svg.node());
 
     return svg.node();
   }
 
+  /**
+   * Updates the simulation visualization by spreading the infection.
+   * @method
+   */
   updateSimulation() {
     const newInfections = this.simulationLogic.spreadInfection();
     if (newInfections === -1) return;
     else this.simulation.restart();
   }
 
+  /**
+   * Generates the HTML structure for the UI.
+   * @method
+   * @param {Object} config - Configuration object containing simulation parameters.
+   */
   generateHTML(config) {
     const infoTexts = this.getInfoTexts();
     const containerElement = this.containerElement;
@@ -445,6 +623,12 @@ class SimulationGraphics {
     `;
   }
 
+  /**
+   * Generates the HTML structure for the spread rate options.
+   * @method
+   * @param {Array} spreadRates - Array of spread rate options.
+   * @returns {String} - HTML string for the spread rate options.
+   */
   generateSpreadRateOptions(spreadRates) {
     return spreadRates.map((rate, index) => `
     <li class="sim-spread-item">
@@ -456,7 +640,14 @@ class SimulationGraphics {
     `).join('\n');
   }
 
+  /**
+   * Generates the HTML structure for the restriction options.
+   * @method
+   * @param {Array} restrictions - Array of restriction options.
+   * @returns {String} - HTML string for the restriction options.
+   */
   generateRestrictionOptions(restrictions) {
+    // Split the restrictions into two columns for better layout
     const midpoint = Math.ceil(restrictions.length / 2);
     const firstHalf = restrictions.slice(0, midpoint);
     const secondHalf = restrictions.slice(midpoint);
@@ -471,6 +662,12 @@ class SimulationGraphics {
     `;
   }
 
+  /**
+   * Generates the HTML structure for a column of restrictions.
+   * @method
+   * @param {Array} restrictions - Array of restriction options.
+   * @returns {String} - HTML string for the column of restrictions.
+   */
   generateRestrictionsColumn(restrictions) {
     return restrictions.map(restriction => {
       const dataAttributes = Object.entries(restriction.multipliers)
@@ -488,12 +685,24 @@ class SimulationGraphics {
     }).join('\n');
   }
 
+  /**
+   * Generates the HTML structure for the scenario options.
+   * @method
+   * @param {Array} scenarios - Array of scenario options.
+   * @returns {String} - HTML string for the scenario options.
+   */
   generateScenarioOptions(scenarios) {
     return scenarios.map((scenario, index) => `
     <option value="${index}">${scenario.label}</option>
     `).join('\n');
   }
 
+  /**
+   * Generates the HTML structure for the legend.
+   * @method
+   * @param {Object} config - Configuration object containing simulation parameters.
+   * @returns {String} - HTML string for the legend.
+   */
   generateLegend(config) {
     const nodesHTML = `
       <h4>Node Colors:</h4>
@@ -541,10 +750,21 @@ class SimulationGraphics {
     return nodesHTML + linksHTML + noteHTML;
   }
 
+  /**
+   * Creates an info icon with a tooltip.
+   * @method
+   * @param {String} tooltipText - The text to display in the tooltip.
+   * @returns {String} - HTML string for the info icon.
+   */
   createInfoIcon(tooltipText) {
     return `<span class="info-icon" data-sim-tooltip="${tooltipText}">ⓘ</span>`;
   }
 
+  /**
+   * Returns the info texts for the simulation parameters.
+   * @method
+   * @returns {Object} - Object containing the info texts for the simulation parameters.
+   */
   getInfoTexts() {
     return {
       nodeCount: "Number of people in the simulation. If the slider is set to 0, a random number of nodes will be generated.",
@@ -556,7 +776,17 @@ class SimulationGraphics {
   }
 }
 
+/**
+ * Represents the controller for the simulation.
+ * @class
+ */
 class SimulationController {
+  /**
+   * @constructor
+   * @param {Object} config - Configuration object containing simulation parameters.
+   * @param {String} simID - The ID of the HTML element to contain the simulation.
+   * @param {Object} randomFunctionsFactories - Object containing custom random functions factories.
+   */
   constructor(config, simID, randomFunctionsFactories = {}) {
     this.config = config;
     this.containerElement = document.getElementById(simID);
@@ -577,6 +807,13 @@ class SimulationController {
     this.createInitialSimulation();
   }
 
+  /**
+   * Adds an event listener for a specific event.
+   * @method
+   * @param {String} eventName - The name of the event to listen for.
+   * @param {Function} callback - The callback function to execute when the event is triggered.
+   * @returns {Boolean} - True if the event listener was added successfully, false otherwise.
+   */
   addEventListener(eventName, callback) {
     if (this.eventListeners[eventName]) {
       this.eventListeners[eventName].push(callback);
@@ -585,6 +822,13 @@ class SimulationController {
     return false;
   }
 
+  /**
+   * Removes an event listener for a specific event.
+   * @method
+   * @param {String} eventName - The name of the event to stop listening for.
+   * @param {Function} callback - The callback function to remove.
+   * @returns {Boolean} - True if the event listener was removed successfully, false otherwise.
+   */
   removeEventListener(eventName, callback) {
     if (this.eventListeners[eventName]) {
       this.eventListeners[eventName] = this.eventListeners[eventName]
@@ -594,6 +838,12 @@ class SimulationController {
     return false;
   }
 
+  /**
+   * Executes all callbacks associated with an event.
+   * @method
+   * @param {String} eventName - The name of the event to trigger.
+   * @param {Object} data - The data to pass to the event listeners.
+   */
   triggerEvent(eventName, data) {
     if (this.eventListeners[eventName]) {
       this.eventListeners[eventName].forEach(callback =>
@@ -607,6 +857,10 @@ class SimulationController {
     }
   }
 
+  /**
+   * Extracts the elements from the HTML structure.
+   * @method
+   */
   initializeElements() {
     this.nodeSlider = this.containerElement.querySelector(".node-count-slider");
     this.infectedSlider = this.containerElement.querySelector(".infected-percentage-slider");
@@ -617,6 +871,10 @@ class SimulationController {
     this.chartArea = this.containerElement.querySelector(".sim-chart-area");
   }
 
+  /**
+   * Initializes the event listeners for the simulation controls.
+   * @method
+   */
   initializeEventListeners() {
     const sliderCallback = () => this.createInitialSimulation();
 
@@ -668,7 +926,12 @@ class SimulationController {
     };
   }
 
-  createInitialSimulation() {    
+  /**
+   * Creates a simulation based on the selected parameters.
+   * @method
+   */
+  createInitialSimulation() {
+    // Clear the previous simulation
     this.visualizationArea.innerHTML = "";
 
     const simulation = this.simulationGraphics.drawSimulation(
@@ -680,6 +943,10 @@ class SimulationController {
     this.updateChart();
   }
 
+  /**
+   * Updates the chart with the current simulation data.
+   * @method
+   */
   updateChart() {
     SimulationGraphics.drawChart(
       this.simulation.infectedAmounts, 
@@ -688,6 +955,10 @@ class SimulationController {
     );
   }
 
+  /**
+   * Updates the simulation parameters based on the UI inputs.
+   * @method
+   */
   updateSimulationParameters() {
     const selectedSpreadRate = this.containerElement.querySelector(".sim-spread-item input:checked");
     this.simulation.spreadRate = parseFloat(selectedSpreadRate.value);
@@ -698,8 +969,14 @@ class SimulationController {
     this.simulation.applyRestrictions(activeRestrictionIds);
   }
 
+  /**
+   * Sets the state of the input elements (enabled/disabled).
+   * @method
+   * @param {Boolean} disabled - Whether to disable the inputs or enable them.
+   */
   setInputState(disabled) {
     this.startButton.disabled = disabled;
+    // Stop button is an exception, the logic is inverted
     this.stopButton.disabled = !disabled;
 
     this.nodeSlider.disabled = disabled;
@@ -713,14 +990,27 @@ class SimulationController {
     inputs.forEach(input => input.disabled = disabled);
   }
 
+  /**
+   * Disables the input elements (enables the stop button).
+   * @method
+   */
   disableInputs() {
     this.setInputState(true);
   }
 
+  /**
+   * Enables the input elements (disables the stop button).
+   * @method
+   */
   enableInputs() {
     this.setInputState(false);
   }
 
+  /**
+   * Selects a spread rate radio button based on the provided ID.
+   * @method
+   * @param {String} id - The ID of the spread rate to select.
+   */
   selectSpreadRate(id) {
     const inputs = this.containerElement.querySelectorAll(".sim-spread-item input");
 
@@ -729,6 +1019,11 @@ class SimulationController {
     });
   }
 
+  /**
+   * Selects the restrictions checkboxes based on the provided IDs.
+   * @method
+   * @param {Array} restrictionsToSelect - Array of restriction IDs to select.
+   */
   selectRestrictions(restrictionsToSelect = []) {
     const checkboxes = this.containerElement.querySelectorAll(".sim-restriction-item input");
 
@@ -737,7 +1032,12 @@ class SimulationController {
     });
   }
 
+  /**
+   * Updates the UI elements based on the selected scenario.
+   * @method
+   */
   updateScenario() {
+    // Use index instead of ID
     const scenarioIndex = parseInt(this.scenarioMenu.value);
     const scenario = this.config.scenarios[scenarioIndex];
 
