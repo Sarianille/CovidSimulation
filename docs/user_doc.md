@@ -39,7 +39,7 @@ The limits of the range slider will correspond to these values.
 
 The second subsection, infected percentage range, allows you to set the minimum, maximum, and default percentage of infected nodes. You can set the values by writing them in the input boxes.
 
-The limits of the range slider will correspond to the minimum and maximum values. The slider will be initially be set to the default value.
+The limits of the range slider will correspond to the minimum and maximum values. The slider will initially be set to the default value.
 
 ![](./img/node-colors.png)
 
