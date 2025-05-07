@@ -25,45 +25,45 @@ The configuration generator is separated into several sections. Each section all
 
 ![](./img/display-options.png)
 
-In display options, you can choose whether to show the heading and introduction text. This is done by checking or unchecking the corresponding box.
+In Display Options, you can choose whether to show the heading and introduction text. This is done by checking or unchecking the corresponding box.
 
 ![](./img/node-configuration-node-count-range.png)
 
-Node configuration is split into two subsections. 
+Node Configuration is split into two subsections. 
 
-The first subsection, node count range, allows you to set the minimum and maximum number of nodes that can be generated for the simulation. You can set the values by writing them in the input boxes.
+The first subsection, Node Count Range, allows you to set the minimum and maximum number of nodes that can be generated for the simulation. You can set the values by writing them in the input boxes.
 
 The limits of the range slider will correspond to these values.
 
 ![](./img/node-configuration-infected-percentage-range.png)
 
-The second subsection, infected percentage range, allows you to set the minimum, maximum, and default percentage of infected nodes. You can set the values by writing them in the input boxes.
+The second subsection, Infected Percentage Range, allows you to set the minimum, maximum, and default percentage of infected nodes. You can set the values by writing them in the input boxes.
 
 The limits of the range slider will correspond to the minimum and maximum values. The slider will initially be set to the default value.
 
 ![](./img/node-colors.png)
 
-In node colors, you can set the colors of the different node states. You can choose the colors by clicking on the color boxes and selecting the desired color from the color picker.
+In Node Colors, you can set the colors of the different node states. You can choose the colors by clicking on the color boxes and selecting the desired color from the color picker.
 
 ![](./img/connection-types.png)
 
-In connection types, you can decide which connection types will appear in the simulation. You can delete or add connection types by clicking on the corresponding buttons. You can set the ID, label, spread probability, and attraction strength of each connection type by writing the values in the input boxes. You can set the color by selecting it from the color picker.
+In Connection Types, you can decide which connection types will appear in the simulation. You can delete or add connection types by clicking on the corresponding buttons. You can set the ID, label, spread probability, and attraction strength of each connection type by writing the values in the input boxes. You can set the color by selecting it from the color picker.
 
 These will be represented by the lines connecting the nodes in the simulation.
 
 ![](./img/spread-rates.png)
 
-In spread rates, you can delete or add spread rates by clicking on the corresponding buttons. You can set the ID, label, and spread rate multiplier of each spread rate by writing the values in the input boxes.
+In Spread Rates, you can delete or add spread rates by clicking on the corresponding buttons. You can set the ID, label, and spread rate multiplier of each spread rate by writing the values in the input boxes.
 
 These will indicate how aggressive the virus is. They will multiply the spread probability of each connection type by their multiplier value.
 
 ![](./img/restrictions.png)
 
-In restrictions, you can decide which restrictions will be possible to apply in the simulation. You can delete or add restrictions by clicking on the corresponding buttons. You can set the ID, label, and tooltip of each restriction by writing the values in the input boxes. You can set how it affects each connection type by writing in the corresponding input box.
+In Restrictions, you can decide which restrictions will be possible to apply in the simulation. You can delete or add restrictions by clicking on the corresponding buttons. You can set the ID, label, and tooltip of each restriction by writing the values in the input boxes. You can set how it affects each connection type by writing in the corresponding input box.
 
 ![](./img/scenarios.png)
 
-In scenarios, you can decide which scenarios will be pre-defined in the simulation. You can delete or add scenarios by clicking on the corresponding buttons. You can set the label by writing in the input box. You can set the spread rate by choosing from the dropdown menu. You can choose which restrictions will be applied by checking the corresponding boxes.
+In Scenarios, you can decide which scenarios will be pre-defined in the simulation. You can delete or add scenarios by clicking on the corresponding buttons. You can set the label by writing in the input box. You can set the spread rate by choosing from the dropdown menu. You can choose which restrictions will be applied by checking the corresponding boxes.
 
 ![](./img/create-simulation.png)
 
